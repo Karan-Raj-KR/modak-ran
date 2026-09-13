@@ -107,22 +107,19 @@ export function createRenderer(container: HTMLElement): RendererSystem {
 
   // Calculate screen-relative ground forward and right vectors
   function getScreenVectors() {
-    // Camera forward projected on ground XZ plane
-    const camDir = new THREE.Vector3();
-    camera.getWorldDirection(camDir);
-    camDir.y = 0;
-    camDir.normalize();
+    // Exact screen-horizontal RIGHT vector in world space, projected on ground plane
+    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+    right.y = 0;
+    right.normalize();
 
-    // Camera right projected on ground XZ plane
-    const camRight = new THREE.Vector3();
-    camRight.crossVectors(camDir, new THREE.Vector3(0, 1, 0)).normalize();
+    // Exact screen-vertical UP vector in world space, projected on ground plane
+    const forward = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+    forward.y = 0;
+    forward.normalize();
 
-    // In Three.js, camDir points into screen (-Z in view space).
-    // So "Screen UP" on the ground plane is camDir.
-    // "Screen RIGHT" on the ground plane is -camRight.
     return {
-      forward: camDir,
-      right: camRight.negate(),
+      forward,
+      right,
     };
   }
 
