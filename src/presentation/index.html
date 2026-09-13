@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visual Preview — Modak Run</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #111827; overflow: hidden; font-family: system-ui; }
+    #preview-root { width: 100vw; height: 100vh; }
+    .status { position: fixed; top: 12px; left: 12px; color: #f5be3d; font-size: 14px; z-index: 100; }
+  </style>
+</head>
+<body>
+  <div id="preview-root"></div>
+  <div class="status" id="status">Visual Preview — level loaded</div>
+
+  <script type="module">
+    /**
+     * Standalone visual preview for Gemini to develop.
+     * This loads the level definition and presents a mock snapshot.
+     * No simulation dependency required.
+     */
+    import { COURTYARD_LEVEL } from '../level/courtyard.ts';
+    import { createPresentation } from '../contracts/presentation.ts';
+
+    const root = document.getElementById('preview-root');
+    const status = document.getElementById('status');
+
+    // Mock snapshot for testing visuals
+    const mockSnapshot = {
+      phase: 'playing',
+      timeRemaining: 55.3,
+      elapsedTime: 4.7,
+      deliveredCount: 3,
+      totalCollectibles: 42,
+      cargo: { count: 2, capacity: 6, itemIds: [5, 12] },
+      personalBest: 15,
+      pbImproved: false,
+      player: {
+        position: { x: 0, y: 0, z: 4.0 },
+        heading: -Math.PI,
+        velocity: { x: 0, y: 0, z: -1.2 },
+        grounded: true,
+        movementState: 'walking',
+      },
+      scurry: {
+        active: false,
+        remainingDuration: 0,
+        cooldownRemaining: 0,
+      },
+      activeCollectibleIds: Array.from({ length: 42 }, (_, i) => i).filter(i => ![5, 12].includes(i)),
+      currentSurface: null,
+      muted: false,
+      roundId: 1,
+      score: 3,
+    };
+
+    async function init() {
+      try {
+        const pres = await createPresentation({
+          root,
+          level: COURTYARD_LEVEL,
+          onCommand: (cmd) => {
+            console.log('Command:', cmd);
+            status.textContent = `Command: ${cmd.type}`;
+          },
+        });
+
+        // Render one frame with mock data
+        pres.render(mockSnapshot, [], 1/60);
+        status.textContent = 'Presentation loaded. Replace with your Three.js scene.';
+      } catch (e) {
+        status.textContent = `Error: ${e.message}`;
+        console.error(e);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
