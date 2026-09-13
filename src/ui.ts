@@ -14,8 +14,10 @@ export interface UISystem {
 }
 
 export function createUI(container: HTMLElement): UISystem {
-  // Build clean HTML structure
-  container.innerHTML = `
+  // Build clean HTML structure without wiping existing canvas
+  const uiLayer = document.createElement('div');
+  uiLayer.id = 'ui-layer';
+  uiLayer.innerHTML = `
     <!-- HUD Overlay -->
     <div id="hud" class="hud hidden">
       <div class="hud-left">
@@ -134,6 +136,7 @@ export function createUI(container: HTMLElement): UISystem {
       </div>
     </div>
   `;
+  container.appendChild(uiLayer);
 
   // Element handles
   const hud = document.getElementById('hud')!;

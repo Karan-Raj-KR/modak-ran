@@ -50,11 +50,14 @@ export function createRenderer(container: HTMLElement): RendererSystem {
 
   // Lighting setup for miniature festival diorama at blue hour
   // 1. Cool ambient / hemisphere fill
-  const hemiLight = new THREE.HemisphereLight(0x6b8db5, 0x3d2817, 0.75);
+  const ambientLight = new THREE.AmbientLight(0xfff3e0, 0.5);
+  scene.add(ambientLight);
+
+  const hemiLight = new THREE.HemisphereLight(0x7ea2cc, 0x4a3422, 0.85);
   scene.add(hemiLight);
 
   // 2. Warm directional key light casting crisp, soft diorama shadows
-  const keyLight = new THREE.DirectionalLight(0xffecd0, 1.4);
+  const keyLight = new THREE.DirectionalLight(0xffecd0, 1.5);
   keyLight.position.set(16, 26, 12);
   keyLight.castShadow = true;
   keyLight.shadow.mapSize.width = 2048;
@@ -71,7 +74,7 @@ export function createRenderer(container: HTMLElement): RendererSystem {
   scene.add(keyLight);
 
   // 3. Subtle warm rim light to define silhouettes from the opposite corner
-  const rimLight = new THREE.DirectionalLight(0xb57842, 0.45);
+  const rimLight = new THREE.DirectionalLight(0xb57842, 0.5);
   rimLight.position.set(-18, 14, -14);
   scene.add(rimLight);
 
@@ -79,7 +82,7 @@ export function createRenderer(container: HTMLElement): RendererSystem {
   function updateCamera(playerX: number = 0, playerZ: number = 0) {
     const portrait = window.innerHeight > window.innerWidth;
     const currentAspect = window.innerWidth / window.innerHeight;
-    const size = portrait ? 16 : 18;
+    const size = portrait ? 24 : 21;
 
     camera.left = (-size * currentAspect) / 2;
     camera.right = (size * currentAspect) / 2;
