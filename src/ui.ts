@@ -268,11 +268,21 @@ export function createUI(container: HTMLElement): UISystem {
   let restartCb: (() => void) | null = null;
   let scurryCb: (() => void) | null = null;
 
-  btnPlay.addEventListener('click', () => startCb && startCb());
-  btnResume.addEventListener('click', () => pauseToggleCb && pauseToggleCb());
-  btnPause.addEventListener('click', () => pauseToggleCb && pauseToggleCb());
-  btnRestartPause.addEventListener('click', () => restartCb && restartCb());
-  btnPlayAgain.addEventListener('click', () => restartCb && restartCb());
+  function attachButton(btn: HTMLElement, cb: () => void) {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      cb();
+    });
+    btn.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+    });
+  }
+
+  attachButton(btnPlay, () => startCb && startCb());
+  attachButton(btnResume, () => pauseToggleCb && pauseToggleCb());
+  attachButton(btnPause, () => pauseToggleCb && pauseToggleCb());
+  attachButton(btnRestartPause, () => restartCb && restartCb());
+  attachButton(btnPlayAgain, () => restartCb && restartCb());
 
   btnTouchScurry.addEventListener('touchstart', (e) => {
     e.preventDefault();
