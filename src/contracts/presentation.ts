@@ -19,7 +19,8 @@
  * CLEANUP: Call presentation.dispose() before creating a new one or unloading.
  */
 
-import type { GameSnapshot, AnyGameEvent } from './events';
+import type { AnyGameEvent } from './events';
+import type { GameSnapshot } from './snapshot';
 import type { GameCommand } from './commands';
 import type { LevelDefinition, Vec3 } from './level';
 
@@ -70,18 +71,10 @@ export interface CreatePresentationOptions {
  * - Handle audio (muted state from snapshot)
  * - Call onCommand() for all user interactions
  */
+import { createPresentation as createPresentationImpl } from '../presentation';
+
 export async function createPresentation(
   opts: CreatePresentationOptions
 ): Promise<Presentation> {
-  // Placeholder — Gemini will replace this with full Three.js implementation
-  return {
-    render(_snapshot, _events, _dt) {},
-    getMovementBasis(): PresentationBasis {
-      return {
-        right: { x: 1, y: 0, z: 0 },
-        forward: { x: 0, y: 0, z: 1 },
-      };
-    },
-    dispose() {},
-  };
+  return createPresentationImpl(opts);
 }

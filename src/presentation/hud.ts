@@ -1,11 +1,11 @@
-import { GameSnapshot, PresentationCommand } from '../contracts/presentation';
+import { GameSnapshot } from '../contracts/snapshot';
+import { GameCommand } from '../contracts/commands';
 import { PresentationAudio } from './audio';
 
 export interface HUDInstance {
   update: (snapshot: GameSnapshot) => void;
   showWarning: (text: string) => void;
-  onCommand: (handler: (cmd: PresentationCommand) => void) => void;
-  getTouchDirection: () => { x: number; y: number };
+  onCommand: (handler: (cmd: GameCommand) => void) => void;
   dispose: () => void;
 }
 
@@ -182,8 +182,9 @@ export function createHUD(container: HTMLElement, audio: PresentationAudio): HUD
   refreshSoundIcon();
 
   btnSound.addEventListener('click', () => {
-    audio.toggleMute();
+    const nextMute = audio.toggleMute();
     refreshSoundIcon();
+    sendCmd({ type: 'setMuted', muted: nextMute });
   });
 
   // Touch device detection
@@ -196,6 +197,61 @@ export function createHUD(container: HTMLElement, audio: PresentationAudio): HUD
   let touchVector = { x: 0, y: 0 };
   let activeTouchId: number | null = null;
   let joystickCenter = { x: 0, y: 0 };
+
+  // Command dispatcher
+  let commandHandler: ((cmd: GameCommand) => void) | null = null;
+
+  function sendCmd(cmd: GameCommand) {
+    if (commandHandler) commandHandler(cmd);
+  }
+
+  // Keyboard input capture
+  const keys = new Set<string>();
+  let lastSentVector = { x: 0, y: 0 };
+
+  function processKeyboardInput() {
+    let x = 0;
+    let y = 0;
+    if (keys.has('KeyA') || keys.has('ArrowLeft')) x -= 1;
+    if (keys.has('KeyD') || keys.has('ArrowRight')) x += 1;
+    if (keys.has('KeyW') || keys.has('ArrowUp')) y += 1; // +Y is screen-up in contract
+    if (keys.has('KeyS') || keys.has('ArrowDown')) y -= 1;
+
+    // Use touch if active
+    if (Math.hypot(touchVector.x, touchVector.y) > 0.05) {
+      x = touchVector.x;
+      y = touchVector.y;
+    }
+
+    const len = Math.hypot(x, y);
+    const normX = len > 0.05 ? (len > 1 ? x / len : x) : 0;
+    const normY = len > 0.05 ? (len > 1 ? y / len : y) : 0;
+
+    if (normX !== lastSentVector.x || normY !== lastSentVector.y) {
+      lastSentVector = { x: normX, y: normY };
+      sendCmd({ type: 'move', input: lastSentVector });
+    }
+  }
+
+  window.addEventListener('keydown', (e) => {
+    keys.add(e.code);
+    if (e.code === 'Space') {
+      e.preventDefault();
+      sendCmd({ type: 'scurry' });
+    }
+    processKeyboardInput();
+  });
+
+  window.addEventListener('keyup', (e) => {
+    keys.delete(e.code);
+    processKeyboardInput();
+  });
+
+  window.addEventListener('blur', () => {
+    keys.clear();
+    touchVector = { x: 0, y: 0 };
+    processKeyboardInput();
+  });
 
   joystickZone.addEventListener('touchstart', (e: TouchEvent) => {
     e.preventDefault();
@@ -233,6 +289,7 @@ export function createHUD(container: HTMLElement, audio: PresentationAudio): HUD
         activeTouchId = null;
         touchVector = { x: 0, y: 0 };
         joystickThumb.style.transform = 'translate(0px, 0px)';
+        processKeyboardInput();
         break;
       }
     }
@@ -247,20 +304,14 @@ export function createHUD(container: HTMLElement, audio: PresentationAudio): HUD
     const dist = Math.hypot(dx, dy);
 
     if (dist <= maxRadius) {
-      touchVector = { x: dx / maxRadius, y: dy / maxRadius };
+      touchVector = { x: dx / maxRadius, y: -dy / maxRadius }; // -dy so up is positive
       joystickThumb.style.transform = `translate(${dx}px, ${dy}px)`;
     } else {
       const angle = Math.atan2(dy, dx);
-      touchVector = { x: Math.cos(angle), y: Math.sin(angle) };
+      touchVector = { x: Math.cos(angle), y: -Math.sin(angle) };
       joystickThumb.style.transform = `translate(${Math.cos(angle) * maxRadius}px, ${Math.sin(angle) * maxRadius}px)`;
     }
-  }
-
-  // Command handlers
-  let commandHandler: ((cmd: PresentationCommand) => void) | null = null;
-
-  function sendCmd(cmd: PresentationCommand) {
-    if (commandHandler) commandHandler(cmd);
+    processKeyboardInput();
   }
 
   function bindClick(el: HTMLElement, fn: () => void) {
@@ -287,11 +338,14 @@ export function createHUD(container: HTMLElement, audio: PresentationAudio): HUD
 
   return {
     update: (snapshot: GameSnapshot) => {
-      // Screen overlays visibility
-      overlayStart.classList.toggle('hidden', snapshot.state !== 'READY' && snapshot.state !== 'LOADING');
-      overlayPause.classList.toggle('hidden', snapshot.state !== 'PAUSED');
-      overlayResults.classList.toggle('hidden', snapshot.state !== 'RESULTS');
-      hud.classList.toggle('hidden', snapshot.state === 'READY' || snapshot.state === 'LOADING');
+      const isReady = snapshot.phase === 'ready' || snapshot.phase === 'loading';
+      const isPaused = snapshot.phase === 'paused';
+      const isResults = snapshot.phase === 'results';
+
+      overlayStart.classList.toggle('hidden', !isReady);
+      overlayPause.classList.toggle('hidden', !isPaused);
+      overlayResults.classList.toggle('hidden', !isResults);
+      hud.classList.toggle('hidden', isReady);
 
       // Timer format
       const mins = Math.floor(snapshot.timeRemaining / 60);
@@ -299,46 +353,38 @@ export function createHUD(container: HTMLElement, audio: PresentationAudio): HUD
       timerVal.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
 
       // Score
-      scoreVal.textContent = String(snapshot.score);
+      scoreVal.textContent = String(snapshot.deliveredCount);
 
       // Basket pips
-      basketVal.textContent = `(${snapshot.basketCount}/${snapshot.basketCapacity})`;
+      basketVal.textContent = `(${snapshot.cargo.count}/${snapshot.cargo.capacity})`;
       pips.forEach((pip, idx) => {
-        pip.classList.toggle('filled', idx < snapshot.basketCount);
+        pip.classList.toggle('filled', idx < snapshot.cargo.count);
       });
 
       // Scurry Cooldown indicator
       if (scurryRingMeter) {
-        const circ = 2 * Math.PI * 44; // ~276.46
-        const fraction = snapshot.player.scurryCooldown / 3.0;
+        const circ = 2 * Math.PI * 44;
+        const fraction = snapshot.scurry.cooldownRemaining / 3.0;
         scurryRingMeter.style.strokeDashoffset = String(circ * (1 - fraction));
-        btnTouchScurry.classList.toggle('ready', snapshot.player.scurryCooldown <= 0);
+        btnTouchScurry.classList.toggle('ready', snapshot.scurry.cooldownRemaining <= 0);
       }
 
-      // Results update if in RESULTS state
-      if (snapshot.state === 'RESULTS') {
+      // Results update
+      if (isResults) {
         const headline = document.getElementById('results-title-text')!;
         const delEl = document.getElementById('val-delivered')!;
         const bestEl = document.getElementById('val-best')!;
         const obsEl = document.getElementById('val-observation')!;
 
-        headline.textContent = `You delivered ${snapshot.score} modak${snapshot.score === 1 ? '' : 's'}`;
-        delEl.textContent = String(snapshot.score);
+        headline.textContent = `You delivered ${snapshot.deliveredCount} modak${snapshot.deliveredCount === 1 ? '' : 's'}`;
+        delEl.textContent = String(snapshot.deliveredCount);
+        bestEl.textContent = String(snapshot.personalBest);
 
-        let pb = snapshot.score;
-        try {
-          const stored = localStorage.getItem('modak_pb');
-          if (stored) pb = Math.max(pb, parseInt(stored, 10) || 0);
-        } catch {
-          // ignore
-        }
-        bestEl.textContent = String(pb);
-
-        if (snapshot.score === 42) {
+        if (snapshot.deliveredCount === 42) {
           obsEl.textContent = 'Spectacular! All 42 modaks offered at the pandal.';
-        } else if (snapshot.basketCount > 0) {
-          obsEl.textContent = `${snapshot.basketCount} modak${snapshot.basketCount === 1 ? '' : 's'} remained safely in your basket.`;
-        } else if (snapshot.score >= 30) {
+        } else if (snapshot.cargo.count > 0) {
+          obsEl.textContent = `${snapshot.cargo.count} modak${snapshot.cargo.count === 1 ? '' : 's'} remained safely in your basket.`;
+        } else if (snapshot.deliveredCount >= 30) {
           obsEl.textContent = 'A bountiful harvest of sweets offered with care.';
         } else {
           obsEl.textContent = 'Each sweet delivered honors the festive courtyard.';
@@ -355,11 +401,9 @@ export function createHUD(container: HTMLElement, audio: PresentationAudio): HUD
       }, 1600);
     },
 
-    onCommand: (handler: (cmd: PresentationCommand) => void) => {
+    onCommand: (handler: (cmd: GameCommand) => void) => {
       commandHandler = handler;
     },
-
-    getTouchDirection: () => touchVector,
 
     dispose: () => {
       if (uiLayer.parentNode) uiLayer.parentNode.removeChild(uiLayer);

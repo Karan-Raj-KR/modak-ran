@@ -2,45 +2,58 @@ import './style.css';
 import * as THREE from 'three';
 import { CAPACITY, freshRound, collect, deliver, end, Round } from './rules';
 import { MAP_BOUNDS, OBSTACLES, isInDeliveryZone, modakPoints } from './world';
-import { GameSnapshot, GameEvent, GameState, PresentationCommand } from './contracts/presentation';
+import {
+  GameSnapshot,
+  AnyGameEvent,
+  GameCommand,
+  GamePhase,
+  LevelDefinition,
+} from './contracts';
 import { createPresentation } from './presentation';
 
-function initApp() {
+async function initApp() {
   const container = document.getElementById('game');
   if (!container) {
     throw new Error('Game container element #game not found');
   }
 
-  // 1. Initialize Presentation Layer
-  const presentation = createPresentation(container);
-
-  // 2. Authoritative Gameplay State
-  let gameState: GameState = 'READY';
+  // Authoritative simulation state
+  let phase: GamePhase = 'ready';
   let roundId = 1;
   let round: Round = freshRound();
   let timeRemaining = 60.0;
+  let elapsedTime = 0.0;
   let personalBest = 0;
+  let pbImproved = false;
+  let isMuted = false;
 
   try {
     const savedPB = localStorage.getItem('modak_pb');
     if (savedPB) personalBest = parseInt(savedPB, 10) || 0;
+    const savedMute = localStorage.getItem('modak_muted');
+    if (savedMute !== null) isMuted = savedMute === 'true';
   } catch {
-    // ignore
+    // ignore storage errors
   }
 
   // Player physics state
   const player = {
     x: 0.0,
+    y: 0.0,
     z: 6.0,
     vx: 0.0,
     vz: 0.0,
     heading: -Math.PI,
     speed: 0.0,
-    isMoving: false,
-    isScurrying: false,
-    scurryTimer: 0.0,
-    scurryCooldown: 0.0,
+    grounded: true,
+    movementState: 'idle' as 'idle' | 'walking' | 'scurrying' | 'scurry-cooldown',
     radius: 0.38,
+  };
+
+  const scurry = {
+    active: false,
+    remainingDuration: 0.0,
+    cooldownRemaining: 0.0,
   };
 
   const normalSpeed = 4.8;
@@ -49,24 +62,21 @@ function initApp() {
   const scurryCooldownDuration = 3.0;
 
   // Collectibles state
-  interface CollectibleState {
-    id: number;
-    x: number;
-    z: number;
-    active: boolean;
+  let activeCollectibleIds = modakPoints.map((_, id) => id);
+
+  // One-shot events queue for current frame
+  let frameEvents: AnyGameEvent[] = [];
+  let eventCounter = 1;
+
+  function pushEvent(evt: any) {
+    frameEvents.push({
+      ...evt,
+      eventId: eventCounter++,
+      roundId,
+      timestamp: elapsedTime,
+    } as AnyGameEvent);
   }
 
-  let collectibles: CollectibleState[] = modakPoints.map(([x, z], id) => ({
-    id,
-    x,
-    z,
-    active: true,
-  }));
-
-  // Transient event queue for presentation
-  let pendingEvents: GameEvent[] = [];
-
-  // Collision detection against walls and obstacles
   function collides(px: number, pz: number): boolean {
     if (
       px - player.radius < MAP_BOUNDS.minX ||
@@ -93,34 +103,36 @@ function initApp() {
     roundId++;
     round = freshRound();
     timeRemaining = 60.0;
+    elapsedTime = 0.0;
+    pbImproved = false;
+
     player.x = 0.0;
+    player.y = 0.0;
     player.z = 6.0;
     player.vx = 0.0;
     player.vz = 0.0;
     player.heading = -Math.PI;
     player.speed = 0.0;
-    player.isMoving = false;
-    player.isScurrying = false;
-    player.scurryTimer = 0.0;
-    player.scurryCooldown = 0.0;
+    player.grounded = true;
+    player.movementState = 'idle';
 
-    collectibles = modakPoints.map(([x, z], id) => ({
-      id,
-      x,
-      z,
-      active: true,
-    }));
-    pendingEvents = [];
+    scurry.active = false;
+    scurry.remainingDuration = 0.0;
+    scurry.cooldownRemaining = 0.0;
 
-    gameState = 'PLAYING';
+    activeCollectibleIds = modakPoints.map((_, id) => id);
+    frameEvents = [];
+
+    phase = 'playing';
   }
 
   function finishRound() {
-    gameState = 'RESULTS';
+    phase = 'results';
     end(round);
 
     if (round.delivered > personalBest) {
       personalBest = round.delivered;
+      pbImproved = true;
       try {
         localStorage.setItem('modak_pb', String(personalBest));
       } catch {
@@ -128,66 +140,104 @@ function initApp() {
       }
     }
 
-    pendingEvents.push({ type: 'round_end', finalScore: round.delivered });
+    pushEvent({
+      type: 'roundEnded',
+      deliveredCount: round.delivered,
+      allDelivered: round.delivered >= 42,
+    });
   }
 
   function triggerScurry() {
-    if (player.scurryCooldown <= 0 && !player.isScurrying && player.isMoving) {
-      player.isScurrying = true;
-      player.scurryTimer = scurryDuration;
-      player.scurryCooldown = scurryCooldownDuration;
-      pendingEvents.push({ type: 'scurry', x: player.x, z: player.z });
+    if (scurry.cooldownRemaining <= 0 && !scurry.active && player.speed > 0.1) {
+      scurry.active = true;
+      scurry.remainingDuration = scurryDuration;
+      scurry.cooldownRemaining = scurryCooldownDuration;
+
+      pushEvent({
+        type: 'scurryStarted',
+        direction: {
+          x: player.vx / (player.speed || 1),
+          y: 0,
+          z: player.vz / (player.speed || 1),
+        },
+      });
     }
   }
 
-  // Keyboard input state
-  const keysDown = new Set<string>();
+  // Active input vector
+  let inputVector = { x: 0, y: 0 };
 
-  window.addEventListener('keydown', (e) => {
-    keysDown.add(e.code);
-    if (e.code === 'Space') {
-      e.preventDefault();
-      if (gameState === 'PLAYING') {
-        triggerScurry();
-      }
-    }
-  });
-
-  window.addEventListener('keyup', (e) => {
-    keysDown.delete(e.code);
-  });
-
-  window.addEventListener('blur', () => {
-    keysDown.clear();
-  });
-
-  // Handle commands from presentation layer
-  presentation.onCommand((cmd: PresentationCommand) => {
+  function handleCommand(cmd: GameCommand) {
     switch (cmd.type) {
       case 'start':
       case 'restart':
         startRound();
         break;
       case 'pause':
-        if (gameState === 'PLAYING') gameState = 'PAUSED';
+        if (phase === 'playing') phase = 'paused';
         break;
       case 'resume':
-        if (gameState === 'PAUSED') gameState = 'PLAYING';
+        if (phase === 'paused') phase = 'playing';
         break;
       case 'scurry':
-        if (gameState === 'PLAYING') triggerScurry();
+        if (phase === 'playing') triggerScurry();
+        break;
+      case 'move':
+        inputVector = cmd.input;
+        break;
+      case 'setMuted':
+        isMuted = cmd.muted;
         break;
     }
+  }
+
+  // Level definition conforming to contract
+  const dummyLevel: LevelDefinition = {
+    levelId: 'courtyard-v1',
+    version: '1.0.0',
+    worldBounds: {
+      minX: -10.8,
+      maxX: 10.8,
+      minZ: -8.8,
+      maxZ: 8.8,
+    },
+    spawn: { x: 0, y: 0, z: 6 },
+    playerDimensions: {
+      capsuleRadius: 0.38,
+      capsuleHalfHeight: 0.2,
+      feetOriginY: 0.4,
+    },
+    staticColliders: [],
+    ramps: [],
+    props: [],
+    collectibles: modakPoints.map(([x, z], id) => ({
+      id,
+      position: { x, y: 0.12, z },
+    })),
+    surfaceZones: [],
+    deliveryZone: {
+      id: 'pandal-delivery',
+      shape: 'box',
+      position: { x: 7.0, y: 0, z: -5.0 },
+      dimensions: { x: 2.6, y: 2.0, z: 2.6 },
+    },
+  };
+
+  // Initialize Presentation Layer
+  const presentation = await createPresentation({
+    root: container,
+    level: dummyLevel,
+    onCommand: handleCommand,
   });
 
   // Auto-pause when tab is hidden
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden && gameState === 'PLAYING') {
-      gameState = 'PAUSED';
+    if (document.hidden && phase === 'playing') {
+      phase = 'paused';
     }
   });
 
-  // Main Loop
+  // Simulation tick loop
   let lastTime = performance.now();
 
   function tick(now: number) {
@@ -196,48 +246,50 @@ function initApp() {
     const delta = Math.min((now - lastTime) / 1000, 0.1);
     lastTime = now;
 
-    if (gameState === 'PLAYING') {
-      // 1. Process Input
-      let rawX = 0;
-      let rawY = 0;
-      if (keysDown.has('KeyA') || keysDown.has('ArrowLeft')) rawX -= 1;
-      if (keysDown.has('KeyD') || keysDown.has('ArrowRight')) rawX += 1;
-      if (keysDown.has('KeyW') || keysDown.has('ArrowUp')) rawY -= 1;
-      if (keysDown.has('KeyS') || keysDown.has('ArrowDown')) rawY += 1;
+    if (phase === 'playing') {
+      elapsedTime += delta;
 
-      // Project onto camera basis
+      // Project input onto camera basis
       const basis = presentation.getMovementBasis();
-      const moveDirX = -rawY * basis.forward.x + rawX * basis.right.x;
-      const moveDirZ = -rawY * basis.forward.z + rawX * basis.right.z;
+      const moveDirX = inputVector.y * basis.forward.x + inputVector.x * basis.right.x;
+      const moveDirZ = inputVector.y * basis.forward.z + inputVector.x * basis.right.z;
       const moveLen = Math.hypot(moveDirX, moveDirZ);
 
-      player.isMoving = moveLen > 0.05;
-
-      // Scurry timers
-      if (player.scurryCooldown > 0) {
-        player.scurryCooldown = Math.max(0, player.scurryCooldown - delta);
+      // Scurry Timers
+      if (scurry.cooldownRemaining > 0) {
+        scurry.cooldownRemaining = Math.max(0, scurry.cooldownRemaining - delta);
       }
-      if (player.isScurrying) {
-        player.scurryTimer -= delta;
-        if (player.scurryTimer <= 0) {
-          player.isScurrying = false;
+      if (scurry.active) {
+        scurry.remainingDuration -= delta;
+        if (scurry.remainingDuration <= 0) {
+          scurry.active = false;
         }
       }
 
-      const currentSpeed = player.isScurrying ? scurrySpeed : normalSpeed;
-      const targetVx = player.isMoving ? (moveDirX / moveLen) * currentSpeed : 0;
-      const targetVz = player.isMoving ? (moveDirZ / moveLen) * currentSpeed : 0;
+      const currentSpeed = scurry.active ? scurrySpeed : normalSpeed;
+      const targetVx = moveLen > 0.05 ? (moveDirX / moveLen) * currentSpeed : 0;
+      const targetVz = moveLen > 0.05 ? (moveDirZ / moveLen) * currentSpeed : 0;
 
       player.vx = THREE.MathUtils.lerp(player.vx, targetVx, Math.min(1.0, delta * 24));
       player.vz = THREE.MathUtils.lerp(player.vz, targetVz, Math.min(1.0, delta * 24));
       player.speed = Math.hypot(player.vx, player.vz);
 
-      if (player.isMoving) {
+      if (player.speed > 0.1) {
         player.heading = Math.atan2(player.vx, player.vz);
       }
 
-      // 2. Collision Sliding with sub-stepping
-      const steps = player.isScurrying ? 4 : 2;
+      if (scurry.active) {
+        player.movementState = 'scurrying';
+      } else if (player.speed > 0.2) {
+        player.movementState = 'walking';
+      } else if (scurry.cooldownRemaining > 0) {
+        player.movementState = 'scurry-cooldown';
+      } else {
+        player.movementState = 'idle';
+      }
+
+      // Collision Sliding
+      const steps = scurry.active ? 4 : 2;
       const stepDelta = delta / steps;
 
       for (let s = 0; s < steps; s++) {
@@ -256,34 +308,44 @@ function initApp() {
         }
       }
 
-      // 3. Collectibles Pickup Check
+      // Collectibles Pickup
       const canCollect = round.basket < CAPACITY;
       const pickupRadiusSq = 0.8 * 0.8;
 
-      collectibles.forEach((c) => {
-        if (c.active && canCollect) {
-          const dx = player.x - c.x;
-          const dz = player.z - c.z;
-          if (dx * dx + dz * dz <= pickupRadiusSq) {
-            c.active = false;
-            collect(round, c.id);
-            pendingEvents.push({
-              type: 'pickup',
-              id: c.id,
-              basketCount: round.basket,
+      const remainingIds: number[] = [];
+      for (const id of activeCollectibleIds) {
+        const [mx, mz] = modakPoints[id];
+        const dx = player.x - mx;
+        const dz = player.z - mz;
+        if (canCollect && dx * dx + dz * dz <= pickupRadiusSq) {
+          collect(round, id);
+          pushEvent({
+            type: 'pickedUp',
+            itemId: id,
+            basketCount: round.basket,
+            position: { x: mx, y: 0.12, z: mz },
+          });
+        } else {
+          remainingIds.push(id);
+          if (!canCollect && dx * dx + dz * dz <= pickupRadiusSq) {
+            pushEvent({
+              type: 'basketFull',
+              position: { x: player.x, y: player.y, z: player.z },
             });
           }
         }
-      });
+      }
+      activeCollectibleIds = remainingIds;
 
-      // 4. Delivery Zone Check
+      // Delivery Zone Check
       if (isInDeliveryZone(player.x, player.z) && round.basket > 0) {
         const count = deliver(round);
         if (count > 0) {
-          pendingEvents.push({
-            type: 'delivery',
+          pushEvent({
+            type: 'delivered',
             count,
-            newScore: round.delivered,
+            totalDelivered: round.delivered,
+            position: { x: 7.0, y: 0.6, z: -7.0 },
           });
 
           if (round.delivered >= 42) {
@@ -293,7 +355,7 @@ function initApp() {
         }
       }
 
-      // 5. Timer Countdown
+      // Timer Countdown
       timeRemaining = Math.max(0, timeRemaining - delta);
       if (timeRemaining <= 0) {
         finishRound();
@@ -301,32 +363,42 @@ function initApp() {
       }
     }
 
-    // Prepare immutable Snapshot for Presentation
+    // Prepare immutable GameSnapshot
     const snapshot: GameSnapshot = {
-      state: gameState,
-      roundId,
+      phase,
       timeRemaining,
+      elapsedTime,
+      deliveredCount: round.delivered,
       score: round.delivered,
-      basketCount: round.basket,
-      basketCapacity: CAPACITY,
-      player: {
-        x: player.x,
-        z: player.z,
-        heading: player.heading,
-        speed: player.speed,
-        isMoving: player.isMoving,
-        isScurrying: player.isScurrying,
-        scurryCooldown: player.scurryCooldown,
+      totalCollectibles: 42,
+      cargo: {
+        count: round.basket,
+        capacity: CAPACITY,
+        itemIds: [],
       },
-      collectibles: collectibles.map((c) => ({ ...c })),
-      events: [...pendingEvents],
+      personalBest,
+      pbImproved,
+      player: {
+        position: { x: player.x, y: player.y, z: player.z },
+        heading: player.heading,
+        velocity: { x: player.vx, y: 0, z: player.vz },
+        grounded: player.grounded,
+        movementState: player.movementState,
+      },
+      scurry: {
+        active: scurry.active,
+        remainingDuration: scurry.remainingDuration,
+        cooldownRemaining: scurry.cooldownRemaining,
+      },
+      activeCollectibleIds,
+      currentSurface: null,
+      muted: isMuted,
+      roundId,
     };
 
-    // Render snapshot through presentation engine
-    presentation.render(snapshot, delta);
-
-    // Clear processed events
-    pendingEvents = [];
+    // Render snapshot and flush frame events
+    presentation.render(snapshot, frameEvents, delta);
+    frameEvents = [];
   }
 
   requestAnimationFrame(tick);
