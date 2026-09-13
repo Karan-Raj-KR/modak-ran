@@ -14,6 +14,6 @@ export default defineConfig({
     outDir: 'dist',
   },
   optimizeDeps: {
-    include: ['@dimforge/rapier3d'],
+    exclude: ['@dimforge/rapier3d', '@dimforge/rapier3d/rapier'],
   },
 });
