@@ -1,5 +1,10 @@
 import * as THREE from 'three';
-import { DELIVERY_ZONE, OBSTACLES } from '../world';
+import { DELIVERY_ZONE } from '../world';
+import {
+  createSandstoneTexture,
+  createTerracottaTexture,
+  createRangoliTexture,
+} from './textures';
 
 export interface DioramaInstance {
   group: THREE.Group;
@@ -10,624 +15,755 @@ export interface DioramaInstance {
 export function createDiorama(scene: THREE.Scene): DioramaInstance {
   const group = new THREE.Group();
 
-  // Curated festive color palette
+  // Curated color palette matching the approved visual specification
   const colors = {
-    terracotta: 0xaa5a3a,        // Rich warm terracotta paving
-    terracottaPath: 0xba6c4a,    // Slightly brighter pathway stone
-    wetStone: 0x8a452a,          // Low-traction wet stone area
-    sandstone: 0xe8cdab,         // Cream sandstone borders and pillars
-    sandstoneDark: 0xc4a680,     // Shadowed sandstone moulding
-    indigo: 0x2b3060,            // Royal festival indigo fabric
-    indigoLight: 0x3d4484,
-    vermilion: 0xb54338,         // Sacred vermilion
-    marigoldYellow: 0xf5be3d,    // Golden yellow marigold
-    marigoldOrange: 0xeb8b26,    // Vibrant saffron orange marigold
-    foliageDeep: 0x264d36,       // Dense green foliage
-    foliagePalm: 0x3d704d,       // Banana / palm frond green
-    stemGreen: 0x477d3b,
-    brassGold: 0xd9b343,         // Warm ceremonial brass
-    flame: 0xffaa2b,             // Diya lamp flame
-    timber: 0x543926,            // Warm wood timber
+    sandstoneWarm: 0xe5cba6,
+    sandstoneBorder: 0xd4b58e,
+    sandstoneDark: 0xb59368,
+    terracottaInlay: 0xaa482f,
+    wetStone: 0x1c1715,
+    indigoFabric: 0x222a55,
+    goldZari: 0xebb434,
+    brassMetal: 0xdca631,
+    vermilion: 0xb53628,
+    marigoldYellow: 0xf5be3d,
+    marigoldOrange: 0xeb7022,
+    foliageBanana: 0x3d7446,
+    foliageStem: 0x285430,
+    flowerOrange: 0xfa6823,
+    flowerWhite: 0xfffcf2,
+    timberWood: 0x483220,
+    lanternAmber: 0xffa434,
   };
 
-  // Reusable Materials
-  const matTerracotta = new THREE.MeshStandardMaterial({
-    color: colors.terracotta,
-    roughness: 0.82,
-    metalness: 0.05,
-  });
-
-  const matTerracottaPath = new THREE.MeshStandardMaterial({
-    color: colors.terracottaPath,
-    roughness: 0.78,
-  });
-
-  const matWetStone = new THREE.MeshStandardMaterial({
-    color: colors.wetStone,
-    roughness: 0.22, // Slick, low-traction wet stone sheen
-    metalness: 0.15,
-  });
+  // Reusable High-Quality Materials
+  const texSandstone = createSandstoneTexture();
+  const texTerracotta = createTerracottaTexture();
+  const texRangoli = createRangoliTexture();
 
   const matSandstone = new THREE.MeshStandardMaterial({
-    color: colors.sandstone,
-    roughness: 0.75,
-    metalness: 0.08,
+    map: texSandstone,
+    roughness: 0.78,
+    metalness: 0.03,
+  });
+
+  const matSandstoneBorder = new THREE.MeshStandardMaterial({
+    color: colors.sandstoneBorder,
+    roughness: 0.72,
+    metalness: 0.05,
   });
 
   const matSandstoneDark = new THREE.MeshStandardMaterial({
     color: colors.sandstoneDark,
     roughness: 0.8,
+    metalness: 0.05,
+  });
+
+  const matTerracottaInlay = new THREE.MeshStandardMaterial({
+    map: texTerracotta,
+    roughness: 0.75,
+  });
+
+  const matWetPuddle = new THREE.MeshStandardMaterial({
+    color: colors.wetStone,
+    roughness: 0.05,
+    metalness: 0.65,
   });
 
   const matIndigo = new THREE.MeshStandardMaterial({
-    color: colors.indigo,
-    roughness: 0.65,
+    color: colors.indigoFabric,
+    roughness: 0.58,
+  });
+
+  const matGold = new THREE.MeshStandardMaterial({
+    color: colors.goldZari,
+    roughness: 0.28,
+    metalness: 0.9,
+  });
+
+  const matBrass = new THREE.MeshStandardMaterial({
+    color: colors.brassMetal,
+    roughness: 0.32,
+    metalness: 0.85,
   });
 
   const matVermilion = new THREE.MeshStandardMaterial({
     color: colors.vermilion,
-    roughness: 0.7,
+    roughness: 0.65,
   });
 
   const matMarigoldYellow = new THREE.MeshStandardMaterial({
     color: colors.marigoldYellow,
-    roughness: 0.55,
+    roughness: 0.6,
   });
 
   const matMarigoldOrange = new THREE.MeshStandardMaterial({
     color: colors.marigoldOrange,
-    roughness: 0.55,
+    roughness: 0.6,
   });
 
-  const matPalmLeaf = new THREE.MeshStandardMaterial({
-    color: colors.foliagePalm,
-    roughness: 0.6,
+  const matBananaLeaf = new THREE.MeshStandardMaterial({
+    color: colors.foliageBanana,
+    roughness: 0.42,
     side: THREE.DoubleSide,
   });
 
   const matFoliageDeep = new THREE.MeshStandardMaterial({
-    color: colors.foliageDeep,
-    roughness: 0.85,
+    color: colors.foliageStem,
+    roughness: 0.75,
   });
 
-  const matStem = new THREE.MeshStandardMaterial({
-    color: colors.stemGreen,
-    roughness: 0.7,
+  const matFlowerOrange = new THREE.MeshStandardMaterial({
+    color: colors.flowerOrange,
+    roughness: 0.5,
   });
 
-  const matBrass = new THREE.MeshStandardMaterial({
-    color: colors.brassGold,
-    roughness: 0.3,
-    metalness: 0.85,
-  });
-
-  const matFlame = new THREE.MeshBasicMaterial({
-    color: colors.flame,
+  const matFlowerWhite = new THREE.MeshStandardMaterial({
+    color: colors.flowerWhite,
+    roughness: 0.5,
   });
 
   const matTimber = new THREE.MeshStandardMaterial({
-    color: colors.timber,
-    roughness: 0.8,
+    color: colors.timberWood,
+    roughness: 0.75,
+  });
+
+  const matLanternGlow = new THREE.MeshBasicMaterial({
+    color: colors.lanternAmber,
   });
 
   // ---------------------------------------------------------------------------
-  // 1. GROUND PLATFORM & REFINED PAVING (NO THICK BEIGE GROUT)
+  // 1. COURTYARD GROUND & INLAID CURVED TERRACOTTA BANDS
   // ---------------------------------------------------------------------------
-  // Soft ambient contact shadow under courtyard plinth
-  const groundShadowGeo = new THREE.PlaneGeometry(26, 22);
-  const groundShadowMat = new THREE.MeshBasicMaterial({
-    color: 0x05070d,
-    transparent: true,
-    opacity: 0.6,
-  });
-  const groundShadow = new THREE.Mesh(groundShadowGeo, groundShadowMat);
-  groundShadow.rotation.x = -Math.PI / 2;
-  groundShadow.position.set(0, -0.22, 0);
-  group.add(groundShadow);
-
-  // Shallow beveled sandstone foundation plinth (24.6 x 0.3 x 20.6)
-  const plinth = new THREE.Mesh(new THREE.BoxGeometry(24.6, 0.3, 20.6), matSandstoneDark);
-  plinth.position.set(0, -0.15, 0);
-  plinth.receiveShadow = true;
-  group.add(plinth);
-
-  // Main fine terracotta ground slab (seamless, continuous)
-  const mainFloor = new THREE.Mesh(new THREE.BoxGeometry(24.0, 0.1, 20.0), matTerracotta);
-  mainFloor.position.set(0, -0.05, 0);
+  // Generous sandstone courtyard pavement (34 x 26) covering entire viewport
+  const floorGeo = new THREE.BoxGeometry(34.0, 0.2, 26.0);
+  const mainFloor = new THREE.Mesh(floorGeo, matSandstone);
+  mainFloor.position.set(0, -0.1, 0);
   mainFloor.receiveShadow = true;
   group.add(mainFloor);
 
-  // Sandstone border curbing
-  const curbHeight = 0.22;
-  const northCurb = new THREE.Mesh(new THREE.BoxGeometry(24, curbHeight, 0.4), matSandstone);
-  northCurb.position.set(0, 0.05, -9.8);
-  northCurb.receiveShadow = true;
-  group.add(northCurb);
+  // Curved concentric terracotta inlay bands in the stone floor matching reference
+  // Band 1: Large sweeping circular ribbon around the delivery area (radius ~4.2)
+  const arcInlay1 = new THREE.Mesh(
+    new THREE.RingGeometry(3.6, 4.25, 48, 1, Math.PI * 0.42, Math.PI * 0.98),
+    matTerracottaInlay
+  );
+  arcInlay1.rotation.x = -Math.PI / 2;
+  arcInlay1.position.set(DELIVERY_ZONE.x, 0.006, DELIVERY_ZONE.z);
+  arcInlay1.receiveShadow = true;
+  group.add(arcInlay1);
 
-  const southCurb = new THREE.Mesh(new THREE.BoxGeometry(24, curbHeight, 0.4), matSandstone);
-  southCurb.position.set(0, 0.05, 9.8);
-  southCurb.receiveShadow = true;
-  group.add(southCurb);
+  // Band 2: Concentric ring around the circular delivery rangoli (radius ~2.1)
+  const arcInlay2 = new THREE.Mesh(
+    new THREE.RingGeometry(1.95, 2.35, 48),
+    matTerracottaInlay
+  );
+  arcInlay2.rotation.x = -Math.PI / 2;
+  arcInlay2.position.set(DELIVERY_ZONE.x, 0.007, DELIVERY_ZONE.z);
+  arcInlay2.receiveShadow = true;
+  group.add(arcInlay2);
 
-  const westCurb = new THREE.Mesh(new THREE.BoxGeometry(0.4, curbHeight, 20), matSandstone);
-  westCurb.position.set(-11.8, 0.05, 0);
-  westCurb.receiveShadow = true;
-  group.add(westCurb);
-
-  const eastCurb = new THREE.Mesh(new THREE.BoxGeometry(0.4, curbHeight, 20), matSandstone);
-  eastCurb.position.set(11.8, 0.05, 0);
-  eastCurb.receiveShadow = true;
-  group.add(eastCurb);
-
-  // Elegant sandstone paved pathways: running bands that guide navigation
-  // North-South Central Walkway (X: -0.6 to +0.6)
-  const nsPath = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 18.0), matTerracottaPath);
-  nsPath.rotation.x = -Math.PI / 2;
-  nsPath.position.set(0.6, 0.005, 0);
-  nsPath.receiveShadow = true;
-  group.add(nsPath);
-
-  // East-West Walkway to Pandal (Z: -4.8 to -3.8)
-  const ewPath = new THREE.Mesh(new THREE.PlaneGeometry(12.0, 1.4), matTerracottaPath);
-  ewPath.rotation.x = -Math.PI / 2;
-  ewPath.position.set(2.0, 0.006, -4.3);
-  ewPath.receiveShadow = true;
-  group.add(ewPath);
-
-  // Low-traction wet stone area with water sheen (near preparation stall at X: -7, Z: -3.5)
-  const wetArea = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 2.8), matWetStone);
-  wetArea.rotation.x = -Math.PI / 2;
-  wetArea.position.set(-7.0, 0.008, -3.5);
-  wetArea.receiveShadow = true;
-  group.add(wetArea);
+  // Band 3: Curved sweeping ribbon leading from arrival path toward center plaza
+  const curvePts: THREE.Vector3[] = [];
+  for (let t = 0; t <= 24; t++) {
+    const frac = t / 24;
+    const px = THREE.MathUtils.lerp(-1.2, 4.8, frac) + Math.sin(frac * Math.PI) * 1.6;
+    const pz = THREE.MathUtils.lerp(7.2, -1.2, frac);
+    curvePts.push(new THREE.Vector3(px, 0.008, pz));
+  }
+  const curvePath = new THREE.CatmullRomCurve3(curvePts);
+  const ribbonGeo = new THREE.TubeGeometry(curvePath, 24, 0.22, 4, false);
+  ribbonGeo.scale(1.0, 0.04, 1.0);
+  const ribbonMesh = new THREE.Mesh(ribbonGeo, matTerracottaInlay);
+  ribbonMesh.receiveShadow = true;
+  group.add(ribbonMesh);
 
   // ---------------------------------------------------------------------------
-  // 2. PERIMETER PILLAR LAMPS (BRASS SAMAI DIYAS)
+  // 2. REFLECTIVE WET-STONE PUDDLE (BOTTOM-LEFT: X: -5.2, Z: 2.2)
   // ---------------------------------------------------------------------------
-  const lampPositions = [
-    [-11.2, -9.2], [0, -9.5], [-11.2, 9.2], [11.2, 9.2],
-    [-11.2, 0], [11.2, 0], [0, 9.5]
-  ];
+  const puddleShape = new THREE.Shape();
+  puddleShape.absellipse(-5.0, 2.2, 2.9, 2.1, 0, Math.PI * 2, false, 0);
+  const puddleGeo = new THREE.ShapeGeometry(puddleShape, 36);
+  const puddle = new THREE.Mesh(puddleGeo, matWetPuddle);
+  puddle.rotation.x = -Math.PI / 2;
+  puddle.position.y = 0.012;
+  puddle.receiveShadow = true;
+  group.add(puddle);
 
-  lampPositions.forEach(([lx, lz]) => {
-    const lamp = new THREE.Group();
-    lamp.position.set(lx, 0, lz);
-
-    // Carved square stone base
-    const pBase = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.35, 0.6), matSandstone);
-    pBase.position.y = 0.175;
-    pBase.castShadow = true;
-    lamp.add(pBase);
-
-    // Turned brass stem
-    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.11, 0.85, 12), matBrass);
-    stem.position.y = 0.75;
-    stem.castShadow = true;
-    lamp.add(stem);
-
-    // Multi-tier brass diya plate
-    const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.16, 0.12, 12), matBrass);
-    plate.position.y = 1.2;
-    plate.castShadow = true;
-    lamp.add(plate);
-
-    // Teardrop oil flame
-    const flame = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.22, 8), matFlame);
-    flame.position.y = 1.34;
-    lamp.add(flame);
-
-    group.add(lamp);
-  });
+  // Warm light right over the puddle creating gleaming golden reflections
+  const puddleGlow = new THREE.PointLight(0xffa838, 2.2, 7.0, 1.6);
+  puddleGlow.position.set(-5.0, 1.4, 2.0);
+  group.add(puddleGlow);
 
   // ---------------------------------------------------------------------------
-  // 3. FESTIVAL PANDAL SHRINE (UPPER-RIGHT: +7.0, -8.0)
+  // 3. REAR RIVERSIDE BALUSTRADE & PERIMETER WALLS
+  // ---------------------------------------------------------------------------
+  const balustradeGroup = new THREE.Group();
+  balustradeGroup.position.set(0, 0, -9.8);
+
+  const railBase = new THREE.Mesh(new THREE.BoxGeometry(32.0, 0.35, 0.45), matSandstoneBorder);
+  railBase.position.y = 0.175;
+  railBase.castShadow = true;
+  railBase.receiveShadow = true;
+  balustradeGroup.add(railBase);
+
+  for (let bx = -15.0; bx <= 15.0; bx += 0.85) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.55, 0.18), matSandstone);
+    post.position.set(bx, 0.55, 0);
+    post.castShadow = true;
+    balustradeGroup.add(post);
+  }
+
+  const railTop = new THREE.Mesh(new THREE.BoxGeometry(32.0, 0.16, 0.48), matSandstoneBorder);
+  railTop.position.y = 0.9;
+  railTop.castShadow = true;
+  balustradeGroup.add(railTop);
+
+  group.add(balustradeGroup);
+
+  // Left & Right boundary courtyard walls
+  const wallL = new THREE.Mesh(new THREE.BoxGeometry(0.45, 1.2, 24.0), matSandstoneBorder);
+  wallL.position.set(-13.0, 0.6, 0);
+  wallL.castShadow = true;
+  wallL.receiveShadow = true;
+  group.add(wallL);
+
+  const wallR = new THREE.Mesh(new THREE.BoxGeometry(0.45, 1.2, 24.0), matSandstoneBorder);
+  wallR.position.set(13.0, 0.6, 0);
+  wallR.castShadow = true;
+  wallR.receiveShadow = true;
+  group.add(wallR);
+
+  // ---------------------------------------------------------------------------
+  // 4. GANESH PANDAL SHRINE (REAR-RIGHT: +7.0, -8.0)
   // ---------------------------------------------------------------------------
   const pandal = new THREE.Group();
   pandal.position.set(7.0, 0, -8.0);
 
-  // Stepped sandstone sanctuary base
-  const step1 = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.25, 3.0), matSandstoneDark);
-  step1.position.y = 0.125;
+  // Tiered Sandstone Platform
+  const step1 = new THREE.Mesh(new THREE.BoxGeometry(4.8, 0.3, 3.2), matSandstoneDark);
+  step1.position.y = 0.15;
   step1.castShadow = true;
   step1.receiveShadow = true;
   pandal.add(step1);
 
-  const step2 = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.25, 2.6), matSandstone);
-  step2.position.y = 0.375;
+  const step2 = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.25, 2.8), matSandstone);
+  step2.position.y = 0.425;
   step2.castShadow = true;
   step2.receiveShadow = true;
   pandal.add(step2);
 
-  // Sanctuary back wall with decorative gold arch panel
-  const backWall = new THREE.Mesh(new THREE.BoxGeometry(4.0, 2.6, 0.22), matSandstoneDark);
-  backWall.position.set(0, 1.7, -1.15);
+  // Sanctuary Back Wall & Devotional Arch
+  const backWall = new THREE.Mesh(new THREE.BoxGeometry(4.2, 3.2, 0.25), matSandstoneDark);
+  backWall.position.set(0, 2.0, -1.25);
   backWall.castShadow = true;
   pandal.add(backWall);
 
-  const goldArch = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.25, 0.06, 24), matBrass);
-  goldArch.rotation.x = Math.PI / 2;
-  goldArch.position.set(0, 2.0, -1.02);
-  pandal.add(goldArch);
+  const goldAura = new THREE.Mesh(new THREE.CylinderGeometry(1.35, 1.35, 0.08, 32), matGold);
+  goldAura.rotation.x = Math.PI / 2;
+  goldAura.position.set(0, 2.1, -1.1);
+  pandal.add(goldAura);
 
-  // Golden ceremonial Kalash (sanctified vessel)
-  const kalashBase = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.65, 0.45, 16), matSandstone);
-  kalashBase.position.set(0, 0.72, -0.35);
-  kalashBase.castShadow = true;
-  pandal.add(kalashBase);
+  // Revered Golden Ganesha Idol
+  const idolGroup = new THREE.Group();
+  idolGroup.position.set(0, 1.0, -0.55);
 
-  const kalashVessel = new THREE.Mesh(new THREE.SphereGeometry(0.38, 16, 16), matBrass);
-  kalashVessel.position.set(0, 1.15, -0.35);
-  kalashVessel.castShadow = true;
-  pandal.add(kalashVessel);
+  const altar = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.85, 0.4, 16), matSandstone);
+  altar.position.y = 0.2;
+  altar.castShadow = true;
+  idolGroup.add(altar);
 
-  const kalashSpire = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.5, 12), matVermilion);
-  kalashSpire.position.set(0, 1.6, -0.35);
-  pandal.add(kalashSpire);
+  const idolBelly = new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 16), matGold);
+  idolBelly.position.set(0, 0.65, 0);
+  idolBelly.castShadow = true;
+  idolGroup.add(idolBelly);
 
-  // 4 Fluted pillars with bases and capitals
-  const pillarPositions = [
-    [-1.9, -1.05], [1.9, -1.05],
-    [-1.9, 1.05], [1.9, 1.05]
+  const idolHead = new THREE.Mesh(new THREE.SphereGeometry(0.28, 16, 16), matGold);
+  idolHead.position.set(0, 1.05, 0.12);
+  idolHead.castShadow = true;
+  idolGroup.add(idolHead);
+
+  const trunkCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0, 1.0, 0.32),
+    new THREE.Vector3(-0.08, 0.82, 0.42),
+    new THREE.Vector3(-0.16, 0.72, 0.35),
+    new THREE.Vector3(-0.12, 0.78, 0.28),
+  ]);
+  const trunkMesh = new THREE.Mesh(
+    new THREE.TubeGeometry(trunkCurve, 12, 0.075, 8, false),
+    matGold
+  );
+  idolGroup.add(trunkMesh);
+
+  const crown = new THREE.Mesh(new THREE.ConeGeometry(0.26, 0.55, 12), matGold);
+  crown.position.set(0, 1.45, 0.12);
+  crown.castShadow = true;
+  idolGroup.add(crown);
+
+  const earL = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.04, 16), matGold);
+  earL.rotation.z = Math.PI / 2;
+  earL.position.set(-0.35, 1.08, 0.08);
+  idolGroup.add(earL);
+
+  const earR = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.04, 16), matGold);
+  earR.rotation.z = Math.PI / 2;
+  earR.position.set(0.35, 1.08, 0.08);
+  idolGroup.add(earR);
+
+  pandal.add(idolGroup);
+
+  // Sanctum Glow Light
+  const sanctumLight = new THREE.PointLight(0xffb844, 2.5, 8.0, 1.5);
+  sanctumLight.position.set(0, 2.2, -0.4);
+  pandal.add(sanctumLight);
+
+  // Four Carved Pillars
+  const pillarPositions: [number, number][] = [
+    [-1.85, 1.15],
+    [1.85, 1.15],
+    [-1.85, -1.15],
+    [1.85, -1.15],
   ];
 
   pillarPositions.forEach(([px, pz]) => {
-    // Square base
-    const pBase = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.2, 0.44), matSandstoneDark);
-    pBase.position.set(px, 0.6, pz);
+    const pBase = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.35, 0.48), matSandstoneBorder);
+    pBase.position.set(px, 0.45, pz);
+    pBase.castShadow = true;
     pandal.add(pBase);
 
-    // Fluted cylindrical column
-    const column = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.18, 2.3, 12), matSandstone);
-    column.position.set(px, 1.85, pz);
-    column.castShadow = true;
-    pandal.add(column);
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.2, 2.6, 12), matSandstone);
+    shaft.position.set(px, 1.75, pz);
+    shaft.castShadow = true;
+    pandal.add(shaft);
 
-    // Lotus capital & bracket
-    const cap = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.16, 0.48), matBrass);
-    cap.position.set(px, 3.05, pz);
-    pandal.add(cap);
+    const capital = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.25, 0.46), matSandstoneBorder);
+    capital.position.set(px, 3.1, pz);
+    capital.castShadow = true;
+    pandal.add(capital);
+
+    // Marigold Garlands wrapped around pillars
+    for (let gy = 0.8; gy < 3.0; gy += 0.38) {
+      const gMat = gy % 0.76 > 0.38 ? matMarigoldOrange : matMarigoldYellow;
+      const gTorus = new THREE.Mesh(new THREE.TorusGeometry(0.23, 0.05, 8, 12), gMat);
+      gTorus.rotation.x = Math.PI / 2;
+      gTorus.position.set(px, gy, pz);
+      pandal.add(gTorus);
+    }
   });
 
-  // Tiered Arched Fabric Canopy (Indigo with gold zari borders)
-  const canopy = new THREE.Mesh(new THREE.ConeGeometry(3.0, 1.35, 4), matIndigo);
-  canopy.position.set(0, 3.8, 0);
+  // Indigo Pandal Canopy
+  const canopy = new THREE.Mesh(new THREE.ConeGeometry(3.2, 1.5, 4), matIndigo);
+  canopy.position.set(0, 3.95, 0);
   canopy.rotation.y = Math.PI / 4;
   canopy.castShadow = true;
   pandal.add(canopy);
 
-  // Scalloped gold fringe valance
-  const valance = new THREE.Mesh(new THREE.BoxGeometry(4.1, 0.2, 2.7), matBrass);
-  valance.position.set(0, 3.12, 0);
-  pandal.add(valance);
+  // Gold Kalash Pinnacle Spire
+  const kalashSpire = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.9, 12), matGold);
+  kalashSpire.position.set(0, 4.95, 0);
+  kalashSpire.castShadow = true;
+  pandal.add(kalashSpire);
 
-  // Golden Pinnacle Spire (Kalash on roof peak)
-  const roofSpire = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.2, 0.8, 12), matBrass);
-  roofSpire.position.set(0, 4.8, 0);
-  pandal.add(roofSpire);
+  // Front Scalloped Indigo Valance
+  const frontValance = new THREE.Mesh(new THREE.BoxGeometry(4.1, 0.38, 0.08), matIndigo);
+  frontValance.position.set(0, 3.2, 1.22);
+  pandal.add(frontValance);
 
-  // Marigold toran garland strings draped across front beam
-  for (let g = -1.8; g <= 1.8; g += 0.25) {
-    const droop = Math.sin(((g + 1.8) / 3.6) * Math.PI) * 0.22;
-    const flower = new THREE.Mesh(
-      new THREE.SphereGeometry(0.09, 8, 8),
-      Math.abs(Math.round(g * 4)) % 2 === 0 ? matMarigoldOrange : matMarigoldYellow
-    );
-    flower.position.set(g, 3.0 - droop, 1.15);
-    pandal.add(flower);
+  // Gold Fringe Trim
+  const goldTrim = new THREE.Mesh(new THREE.BoxGeometry(4.14, 0.06, 0.1), matGold);
+  goldTrim.position.set(0, 3.0, 1.22);
+  pandal.add(goldTrim);
+
+  // Tall Brass Samai Standing Oil Lamps
+  function createSamaiLamp(lx: number, lz: number): THREE.Group {
+    const lampG = new THREE.Group();
+    lampG.position.set(lx, 0.55, lz);
+
+    const b1 = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.36, 0.08, 16), matBrass);
+    lampG.add(b1);
+
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.06, 1.2, 10), matBrass);
+    stem.position.y = 0.65;
+    stem.castShadow = true;
+    lampG.add(stem);
+
+    const dish1 = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.16, 0.08, 16), matBrass);
+    dish1.position.y = 0.85;
+    lampG.add(dish1);
+
+    const dish2 = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.12, 0.07, 16), matBrass);
+    dish2.position.y = 1.25;
+    lampG.add(dish2);
+
+    const flame = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.12, 8), matLanternGlow);
+    flame.position.y = 1.35;
+    lampG.add(flame);
+
+    const flameLight = new THREE.PointLight(0xffa834, 1.4, 4.5, 1.8);
+    flameLight.position.y = 1.4;
+    lampG.add(flameLight);
+
+    return lampG;
   }
 
-  // Low brass offering / collection table in front
-  const table = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.18, 0.8), matBrass);
-  table.position.set(0, 0.6, 1.05);
-  table.castShadow = true;
-  pandal.add(table);
+  pandal.add(createSamaiLamp(-1.4, 0.95));
+  pandal.add(createSamaiLamp(1.4, 0.95));
 
-  // Modak offering thalis on table
-  const thali1 = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.2, 0.06, 12), matBrass);
-  thali1.position.set(-0.7, 0.72, 1.05);
-  pandal.add(thali1);
+  // Low Wooden Offering Table
+  const tableTop = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.15, 0.8), matTimber);
+  tableTop.position.set(0, 0.45, 0.65);
+  tableTop.castShadow = true;
+  tableTop.receiveShadow = true;
+  pandal.add(tableTop);
 
-  const thali2 = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.2, 0.06, 12), matBrass);
-  thali2.position.set(0.7, 0.72, 1.05);
-  pandal.add(thali2);
+  for (let tx = -0.7; tx <= 0.7; tx += 0.7) {
+    const thali = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.22, 0.04, 16), matBrass);
+    thali.position.set(tx, 0.55, 0.65);
+    pandal.add(thali);
 
-  // Dedicated warm glowing light inside shrine
-  const shrineLight = new THREE.PointLight(0xffaa33, 1.4, 8);
-  shrineLight.position.set(0, 2.2, 0);
-  pandal.add(shrineLight);
+    const modakMound = new THREE.Mesh(
+      new THREE.ConeGeometry(0.18, 0.22, 10),
+      new THREE.MeshStandardMaterial({ color: 0xfcf5ea, roughness: 0.4 })
+    );
+    modakMound.position.set(tx, 0.66, 0.65);
+    pandal.add(modakMound);
+  }
 
   group.add(pandal);
 
   // ---------------------------------------------------------------------------
-  // 4. DELIVERY ZONE PAD (+7, -5) WITH RANGOLI & BEACON
+  // 5. ACCESSIBLE RANGOLI DELIVERY PAD (X: 7.0, Z: -5.0)
   // ---------------------------------------------------------------------------
-  const deliveryPad = new THREE.Mesh(
-    new THREE.PlaneGeometry(DELIVERY_ZONE.width, DELIVERY_ZONE.depth),
-    matSandstone
-  );
-  deliveryPad.rotation.x = -Math.PI / 2;
-  deliveryPad.position.set(DELIVERY_ZONE.x, 0.012, DELIVERY_ZONE.z);
-  deliveryPad.receiveShadow = true;
-  group.add(deliveryPad);
-
-  // Circular vermilion rangoli border
-  const rangoliRing = new THREE.Mesh(
-    new THREE.RingGeometry(0.9, 1.15, 36),
-    new THREE.MeshBasicMaterial({ color: colors.vermilion, side: THREE.DoubleSide })
-  );
-  rangoliRing.rotation.x = -Math.PI / 2;
-  rangoliRing.position.set(DELIVERY_ZONE.x, 0.016, DELIVERY_ZONE.z);
-  group.add(rangoliRing);
-
-  // 8 Flower petals inside rangoli
-  for (let p = 0; p < 8; p++) {
-    const angle = (p / 8) * Math.PI * 2;
-    const petal = new THREE.Mesh(
-      new THREE.CircleGeometry(0.2, 8),
-      new THREE.MeshBasicMaterial({ color: colors.marigoldYellow, side: THREE.DoubleSide })
-    );
-    petal.rotation.x = -Math.PI / 2;
-    petal.position.set(
-      DELIVERY_ZONE.x + Math.cos(angle) * 0.58,
-      0.018,
-      DELIVERY_ZONE.z + Math.sin(angle) * 0.58
-    );
-    group.add(petal);
-  }
-
-  // Pulsing delivery beacon ring
-  const beaconRingMat = new THREE.MeshBasicMaterial({
-    color: colors.marigoldYellow,
-    side: THREE.DoubleSide,
+  const rangoliPad = new THREE.Mesh(new THREE.CircleGeometry(1.45, 48), new THREE.MeshBasicMaterial({
+    map: texRangoli,
     transparent: true,
-    opacity: 0.8,
+    opacity: 0.96,
+  }));
+  rangoliPad.rotation.x = -Math.PI / 2;
+  rangoliPad.position.set(DELIVERY_ZONE.x, 0.016, DELIVERY_ZONE.z);
+  group.add(rangoliPad);
+
+  const pulseRingMat = new THREE.MeshBasicMaterial({
+    color: colors.goldZari,
+    transparent: true,
+    opacity: 0.75,
+    side: THREE.DoubleSide,
   });
-  const beaconRing = new THREE.Mesh(new THREE.RingGeometry(1.22, 1.32, 36), beaconRingMat);
-  beaconRing.rotation.x = -Math.PI / 2;
-  beaconRing.position.set(DELIVERY_ZONE.x, 0.02, DELIVERY_ZONE.z);
-  group.add(beaconRing);
+  const pulseRing = new THREE.Mesh(new THREE.RingGeometry(1.46, 1.58, 36), pulseRingMat);
+  pulseRing.rotation.x = -Math.PI / 2;
+  pulseRing.position.set(DELIVERY_ZONE.x, 0.018, DELIVERY_ZONE.z);
+  group.add(pulseRing);
 
   // ---------------------------------------------------------------------------
-  // 5. PREPARATION STALL (UPPER-LEFT: -7.0, -6.8)
+  // 6. SWEETS PREPARATION STALL (LEFT: X: -7.0, Z: -6.8)
   // ---------------------------------------------------------------------------
   const stall = new THREE.Group();
   stall.position.set(-7.0, 0, -6.8);
 
-  // Wood frame counter
-  const counter = new THREE.Mesh(new THREE.BoxGeometry(4.0, 0.85, 1.8), matTimber);
-  counter.position.y = 0.425;
-  counter.castShadow = true;
-  stall.add(counter);
+  const stallCounter = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.85, 2.0), matTimber);
+  stallCounter.position.y = 0.425;
+  stallCounter.castShadow = true;
+  stallCounter.receiveShadow = true;
+  stall.add(stallCounter);
 
-  // Countertop cloth runner
-  const cloth = new THREE.Mesh(new THREE.BoxGeometry(3.7, 0.04, 1.6), matIndigo);
-  cloth.position.y = 0.87;
-  stall.add(cloth);
+  const counterLip = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.08, 2.2), matSandstoneBorder);
+  counterLip.position.y = 0.88;
+  counterLip.castShadow = true;
+  stall.add(counterLip);
 
-  // 4 Corner wooden posts
-  const postPositions = [
-    [-1.9, -0.8], [1.9, -0.8],
-    [-1.9, 0.8], [1.9, 0.8]
+  const frontBanner = new THREE.Mesh(new THREE.BoxGeometry(4.0, 0.45, 0.05), matVermilion);
+  frontBanner.position.set(0, 0.52, 1.03);
+  stall.add(frontBanner);
+
+  const sPostPositions = [
+    [-1.9, 0.9],
+    [1.9, 0.9],
+    [-1.9, -0.9],
+    [1.9, -0.9],
   ];
-  postPositions.forEach(([sx, sz]) => {
-    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.5, 8), matTimber);
-    post.position.set(sx, 1.25, sz);
-    post.castShadow = true;
-    stall.add(post);
+  sPostPositions.forEach(([spx, spz]) => {
+    const sPost = new THREE.Mesh(new THREE.BoxGeometry(0.16, 2.2, 0.16), matTimber);
+    sPost.position.set(spx, 1.85, spz);
+    sPost.castShadow = true;
+    stall.add(sPost);
   });
 
-  // Scalloped fabric canopy with forward slant
-  const stallAwning = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.1, 2.4), matIndigo);
-  stallAwning.position.set(0, 2.55, 0);
-  stallAwning.rotation.x = 0.12;
-  stallAwning.castShadow = true;
-  stall.add(stallAwning);
+  const awning = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.1, 2.4), matIndigo);
+  awning.position.set(0, 2.8, 0);
+  awning.rotation.x = 0.12;
+  awning.castShadow = true;
+  stall.add(awning);
 
-  // Awning vermilion trim
-  const awningTrim = new THREE.Mesh(new THREE.BoxGeometry(4.42, 0.22, 0.06), matVermilion);
-  awningTrim.position.set(0, 2.42, 1.15);
-  stall.add(awningTrim);
+  const awningValance = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.28, 0.06), matVermilion);
+  awningValance.position.set(0, 2.65, 1.2);
+  stall.add(awningValance);
 
-  // Sweet preparation props on counter
-  const t1 = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.05, 16), matBrass);
-  t1.position.set(-1.0, 0.92, 0.1);
-  stall.add(t1);
+  // Signboard
+  const signboardGroup = new THREE.Group();
+  signboardGroup.position.set(0, 2.2, 1.08);
 
-  const t2 = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.05, 16), matBrass);
-  t2.position.set(0.2, 0.92, -0.1);
-  stall.add(t2);
+  const signBoard = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.65, 0.06), matTimber);
+  signBoard.castShadow = true;
+  signboardGroup.add(signBoard);
 
-  const sweetMound = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.2, 12), matSandstone);
-  sweetMound.position.set(-1.0, 1.04, 0.1);
-  stall.add(sweetMound);
+  const signBorder = new THREE.Mesh(new THREE.BoxGeometry(1.36, 0.71, 0.04), matGold);
+  signboardGroup.add(signBorder);
 
-  const sweetMound2 = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.2, 12), matMarigoldOrange);
-  sweetMound2.position.set(0.2, 1.04, -0.1);
-  stall.add(sweetMound2);
+  const signModak = new THREE.Mesh(
+    new THREE.ConeGeometry(0.18, 0.28, 8),
+    new THREE.MeshStandardMaterial({ color: 0xfcf6eb, roughness: 0.3 })
+  );
+  signModak.position.set(0, 0, 0.05);
+  signboardGroup.add(signModak);
+  stall.add(signboardGroup);
 
-  // Warm hanging lantern
-  const stallLantern = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 12), matFlame);
-  stallLantern.position.set(0, 2.2, 0.7);
-  stall.add(stallLantern);
+  // Brass thalis of sweets on counter
+  const thali1 = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.36, 0.05, 16), matBrass);
+  thali1.position.set(-1.1, 0.94, 0.2);
+  stall.add(thali1);
+
+  const modakPyramid = new THREE.Mesh(
+    new THREE.ConeGeometry(0.32, 0.42, 8),
+    new THREE.MeshStandardMaterial({ color: 0xfdf7eb, roughness: 0.38 })
+  );
+  modakPyramid.position.set(-1.1, 1.15, 0.2);
+  stall.add(modakPyramid);
+
+  const thali2 = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.38, 0.05, 16), matBrass);
+  thali2.position.set(1.1, 0.94, 0.2);
+  stall.add(thali2);
+
+  const laddooPyramid = new THREE.Mesh(
+    new THREE.ConeGeometry(0.34, 0.45, 10),
+    new THREE.MeshStandardMaterial({ color: 0xf7a428, roughness: 0.55 })
+  );
+  laddooPyramid.position.set(1.1, 1.16, 0.2);
+  stall.add(laddooPyramid);
+
+  // Hanging Stall Lanterns
+  function createHangingLantern(lx: number, lz: number): THREE.Group {
+    const lg = new THREE.Group();
+    lg.position.set(lx, 2.2, lz);
+
+    const cap = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.12, 8), matBrass);
+    lg.add(cap);
+
+    const glass = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.22, 10), matLanternGlow);
+    glass.position.y = -0.12;
+    lg.add(glass);
+
+    const lLight = new THREE.PointLight(0xffaa38, 2.0, 6.5, 1.6);
+    lLight.position.y = -0.12;
+    lLight.castShadow = true;
+    lg.add(lLight);
+
+    return lg;
+  }
+
+  stall.add(createHangingLantern(-1.8, 1.15));
+  stall.add(createHangingLantern(1.8, 1.15));
 
   group.add(stall);
 
   // ---------------------------------------------------------------------------
-  // 6. SCULPTED REALISTIC VEGETATION ON ISLANDS (NO BROCCOLI LUMPS!)
+  // 7. SCULPTED CURVED PLANTER ISLAND & TROPICAL FOLIAGE (ISLAND A: X: -3.0, Z: 0)
   // ---------------------------------------------------------------------------
-
-  // Helper to construct natural arched palm / banana leaves
-  function createPalmFrond(length: number, width: number, archAngle: number): THREE.Group {
-    const frond = new THREE.Group();
-    const segs = 6;
-    let prevY = 0;
-    let prevZ = 0;
-
-    for (let s = 0; s < segs; s++) {
-      const frac = s / segs;
-      const segLen = length / segs;
-      const segWidth = Math.sin(frac * Math.PI) * width;
-      const leafSeg = new THREE.Mesh(new THREE.PlaneGeometry(segWidth, segLen), matPalmLeaf);
-      leafSeg.position.set(0, prevY + segLen * 0.5 * Math.cos(frac * archAngle), prevZ + segLen * 0.5 * Math.sin(frac * archAngle));
-      leafSeg.rotation.x = frac * archAngle;
-      frond.add(leafSeg);
-
-      prevY += segLen * Math.cos(frac * archAngle);
-      prevZ += segLen * Math.sin(frac * archAngle);
-    }
-    return frond;
-  }
-
-  // Helper to create detailed marigold plant with stems & flowers
-  function createMarigoldBush(flowerCount: number): THREE.Group {
-    const bush = new THREE.Group();
-
-    for (let f = 0; f < flowerCount; f++) {
-      const angle = (f / flowerCount) * Math.PI * 2 + Math.sin(f) * 0.3;
-      const dist = 0.3 + (f % 3) * 0.25;
-      const height = 0.45 + (f % 2) * 0.2;
-
-      // Stem
-      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, height, 6), matStem);
-      stem.position.set(Math.cos(angle) * dist, height / 2, Math.sin(angle) * dist);
-      bush.add(stem);
-
-      // Distinct marigold flower bloom
-      const bloomGeo = new THREE.SphereGeometry(0.12, 10, 10);
-      bloomGeo.scale(1.1, 0.8, 1.1);
-      const bloom = new THREE.Mesh(bloomGeo, f % 2 === 0 ? matMarigoldOrange : matMarigoldYellow);
-      bloom.position.set(Math.cos(angle) * dist, height + 0.05, Math.sin(angle) * dist);
-      bloom.castShadow = true;
-      bush.add(bloom);
-    }
-    return bush;
-  }
-
-  // Island A (West: -3.0, 0)
   const islandA = new THREE.Group();
   islandA.position.set(-3.0, 0, 0);
 
-  // Sculpted sandstone retaining curb
-  const curbA = new THREE.Mesh(new THREE.CylinderGeometry(2.0, 2.2, 0.3, 28), matSandstone);
-  curbA.scale.set(1.0, 1.0, 1.25);
-  curbA.position.y = 0.15;
-  curbA.castShadow = true;
-  curbA.receiveShadow = true;
-  islandA.add(curbA);
+  const curbGeo = new THREE.CylinderGeometry(2.4, 2.5, 0.42, 28);
+  curbGeo.scale(1.1, 1.0, 1.35);
+  const curb = new THREE.Mesh(curbGeo, matSandstoneBorder);
+  curb.position.y = 0.21;
+  curb.castShadow = true;
+  curb.receiveShadow = true;
+  islandA.add(curb);
 
-  // Dark moist soil mound
-  const soilA = new THREE.Mesh(new THREE.SphereGeometry(1.9, 16, 12), matFoliageDeep);
-  soilA.scale.set(1.0, 0.35, 1.25);
-  soilA.position.y = 0.2;
-  soilA.receiveShadow = true;
-  islandA.add(soilA);
+  const soilGeo = new THREE.CylinderGeometry(2.2, 2.2, 0.1, 24);
+  soilGeo.scale(1.1, 1.0, 1.35);
+  const soil = new THREE.Mesh(soilGeo, matFoliageDeep);
+  soil.position.y = 0.38;
+  islandA.add(soil);
 
-  // Arched banana palm fronds
-  for (let p = 0; p < 6; p++) {
-    const pAngle = (p / 6) * Math.PI * 2;
-    const frond = createPalmFrond(1.2, 0.35, 0.9);
-    frond.rotation.y = pAngle;
-    frond.position.set(Math.cos(pAngle) * 0.4, 0.3, Math.sin(pAngle) * 0.5);
-    islandA.add(frond);
+  // Broad sculpted banana palm fan leaves fanning out gracefully
+  function createOpenBananaLeaf(scale: number, rotY: number, tiltOut: number, bendDown: number): THREE.Group {
+    const leafG = new THREE.Group();
+    leafG.rotation.y = rotY;
+
+    // Curved parabolic leaf
+    const leafGeo = new THREE.PlaneGeometry(1.05 * scale, 2.9 * scale, 6, 14);
+    const pos = leafGeo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      const rawFrac = (y + 1.45 * scale) / (2.9 * scale);
+      const frac = Math.max(0, Math.min(1.0, isNaN(rawFrac) ? 0.5 : rawFrac));
+
+      const widthFactor = Math.sin(Math.pow(frac, 0.72) * Math.PI);
+      pos.setX(i, x * Math.max(0.08, widthFactor));
+
+      const archZ = Math.sin(frac * Math.PI * 0.8) * (1.1 * scale) + Math.pow(frac, 2.0) * (0.8 * bendDown);
+      const archY = y * 0.8 - Math.pow(frac, 2.1) * (0.5 * bendDown);
+      pos.setY(i, archY);
+      pos.setZ(i, archZ);
+
+      const vBend = (1.0 - Math.abs(x) / (0.52 * scale)) * 0.09 * scale;
+      pos.setZ(i, pos.getZ(i) + vBend);
+    }
+    leafGeo.computeVertexNormals();
+
+    const leafMesh = new THREE.Mesh(leafGeo, matBananaLeaf);
+    leafMesh.position.set(0, 1.05 * scale, 0);
+    leafMesh.rotation.x = -tiltOut;
+    leafMesh.castShadow = true;
+    leafMesh.receiveShadow = true;
+    leafG.add(leafMesh);
+
+    return leafG;
   }
 
-  // Marigold plants with stems
-  const bushA = createMarigoldBush(12);
-  bushA.position.set(0, 0.25, 0);
-  islandA.add(bushA);
+  // Gracefully flared fan arrangement matching reference image
+  const leafSpreads = [
+    { a: 0.1,  s: 1.45, tilt: 0.52, bend: 0.5 },
+    { a: 0.65, s: 1.6,  tilt: 0.6,  bend: 0.55 },
+    { a: 1.3,  s: 1.5,  tilt: 0.55, bend: 0.45 },
+    { a: 2.0,  s: 1.65, tilt: 0.65, bend: 0.6 },
+    { a: 2.8,  s: 1.4,  tilt: 0.5,  bend: 0.48 },
+    { a: 3.5,  s: 1.55, tilt: 0.58, bend: 0.52 },
+    { a: 4.3,  s: 1.6,  tilt: 0.62, bend: 0.58 },
+    { a: 5.2,  s: 1.48, tilt: 0.54, bend: 0.45 },
+  ];
 
-  // Sacred Potted Tulsi Vrindavan in center
-  const tulsiPot = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.6, 0.55), matVermilion);
-  tulsiPot.position.set(0, 0.6, 0);
-  tulsiPot.castShadow = true;
-  islandA.add(tulsiPot);
+  leafSpreads.forEach((ls) => {
+    const l = createOpenBananaLeaf(ls.s, ls.a, ls.tilt, ls.bend);
+    l.position.set(0, 0.38, 0);
+    islandA.add(l);
+  });
 
-  const tulsiPlant = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.5, 8), matStem);
-  tulsiPlant.position.set(0, 1.05, 0);
-  islandA.add(tulsiPlant);
+  // Bird-of-Paradise Flowers standing tall
+  const flowerAngles = [0.8, 2.2, 3.8, 5.4];
+  flowerAngles.forEach((fa) => {
+    const fGroup = new THREE.Group();
+    fGroup.position.set(Math.cos(fa) * 1.05, 1.35, Math.sin(fa) * 1.25);
+    fGroup.rotation.y = fa;
 
+    for (let petal = -2; petal <= 2; petal++) {
+      const pMesh = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.48, 5), matFlowerOrange);
+      pMesh.position.set(petal * 0.06, Math.abs(petal) * 0.06, 0);
+      pMesh.rotation.z = petal * 0.28;
+      fGroup.add(pMesh);
+    }
+    islandA.add(fGroup);
+  });
+
+  // Stone Lattice Lantern on Planter Corner
+  const stoneLamp = new THREE.Group();
+  stoneLamp.position.set(1.5, 0.42, 1.8);
+
+  const lampPedestal = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.15, 0.42), matSandstoneBorder);
+  stoneLamp.add(lampPedestal);
+
+  const lampLattice = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.48, 0.36), matSandstone);
+  lampLattice.position.y = 0.315;
+  lampLattice.castShadow = true;
+  stoneLamp.add(lampLattice);
+
+  const lampCore = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.34, 0.24), matLanternGlow);
+  lampCore.position.y = 0.315;
+  stoneLamp.add(lampCore);
+
+  const lampRoof = new THREE.Mesh(new THREE.ConeGeometry(0.38, 0.26, 4), matSandstoneBorder);
+  lampRoof.position.y = 0.68;
+  lampRoof.rotation.y = Math.PI / 4;
+  lampRoof.castShadow = true;
+  stoneLamp.add(lampRoof);
+
+  const stoneLampLight = new THREE.PointLight(0xffa834, 1.8, 6.0, 1.6);
+  stoneLampLight.position.y = 0.32;
+  stoneLampLight.castShadow = true;
+  stoneLamp.add(stoneLampLight);
+
+  islandA.add(stoneLamp);
   group.add(islandA);
 
-  // Island B (East: +4.0, +2.0)
+  // ---------------------------------------------------------------------------
+  // 8. RIGHT-SIDE FLOWERING PLANTER (ISLAND B: X: 4.0, Z: 2.0)
+  // ---------------------------------------------------------------------------
   const islandB = new THREE.Group();
   islandB.position.set(4.0, 0, 2.0);
 
-  const curbB = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.8, 0.3, 24), matSandstone);
-  curbB.scale.set(0.95, 1.0, 1.15);
-  curbB.position.y = 0.15;
+  const curbBGeo = new THREE.CylinderGeometry(1.6, 1.7, 0.38, 22);
+  curbBGeo.scale(1.2, 1.0, 1.0);
+  const curbB = new THREE.Mesh(curbBGeo, matSandstoneBorder);
+  curbB.position.y = 0.19;
   curbB.castShadow = true;
   curbB.receiveShadow = true;
   islandB.add(curbB);
 
-  const soilB = new THREE.Mesh(new THREE.SphereGeometry(1.5, 16, 12), matFoliageDeep);
-  soilB.scale.set(0.95, 0.35, 1.15);
-  soilB.position.y = 0.2;
-  soilB.receiveShadow = true;
-  islandB.add(soilB);
+  for (let s = 0; s < 18; s++) {
+    const sang = (s / 18) * Math.PI * 2;
+    const srad = 0.3 + (s % 4) * 0.28;
+    const sx = Math.cos(sang) * srad * 1.1;
+    const sz = Math.sin(sang) * srad;
+    const stemH = 0.4 + (s % 3) * 0.25;
 
-  // Arched fronds on Island B
-  for (let p = 0; p < 5; p++) {
-    const pAngle = (p / 5) * Math.PI * 2;
-    const frond = createPalmFrond(1.0, 0.3, 0.85);
-    frond.rotation.y = pAngle;
-    frond.position.set(Math.cos(pAngle) * 0.3, 0.3, Math.sin(pAngle) * 0.35);
-    islandB.add(frond);
+    const flowerStem = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.02, 0.02, stemH, 6),
+      matFoliageDeep
+    );
+    flowerStem.position.set(sx, 0.38 + stemH / 2, sz);
+    islandB.add(flowerStem);
+
+    const fMat = s % 2 === 0 ? matFlowerWhite : matFlowerOrange;
+    const blossom = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), fMat);
+    blossom.position.set(sx, 0.38 + stemH, sz);
+    blossom.castShadow = true;
+    islandB.add(blossom);
   }
-
-  const bushB = createMarigoldBush(9);
-  bushB.position.set(0, 0.25, 0);
-  islandB.add(bushB);
 
   group.add(islandB);
 
   // ---------------------------------------------------------------------------
-  // 7. ARRIVAL COURTYARD RANGOLI (0, +5.5)
+  // 9. LOWER-LEFT FOREGROUND LEAF FRAMING
   // ---------------------------------------------------------------------------
-  const rangoliArrival = new THREE.Group();
-  rangoliArrival.position.set(0, 0.015, 5.5);
+  const fgLeafGroup = new THREE.Group();
+  fgLeafGroup.position.set(-2.8, 1.6, 9.8);
+  fgLeafGroup.rotation.set(0.3, 0.6, -0.2);
 
-  const outerRing = new THREE.Mesh(
-    new THREE.RingGeometry(1.1, 1.35, 36),
-    new THREE.MeshBasicMaterial({ color: colors.vermilion, side: THREE.DoubleSide })
-  );
-  outerRing.rotation.x = -Math.PI / 2;
-  rangoliArrival.add(outerRing);
-
-  const innerGold = new THREE.Mesh(
-    new THREE.RingGeometry(0.4, 0.55, 36),
-    new THREE.MeshBasicMaterial({ color: colors.sandstone, side: THREE.DoubleSide })
-  );
-  innerGold.rotation.x = -Math.PI / 2;
-  rangoliArrival.add(innerGold);
-
-  for (let p = 0; p < 8; p++) {
-    const angle = (p / 8) * Math.PI * 2;
-    const petal = new THREE.Mesh(
-      new THREE.CircleGeometry(0.22, 8),
-      new THREE.MeshBasicMaterial({ color: colors.marigoldYellow, side: THREE.DoubleSide })
+  for (let f = 0; f < 4; f++) {
+    const fLeaf = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.9, 1.6),
+      matBananaLeaf
     );
-    petal.rotation.x = -Math.PI / 2;
-    petal.position.set(Math.cos(angle) * 0.85, 0.002, Math.sin(angle) * 0.85);
-    rangoliArrival.add(petal);
+    fLeaf.position.set(f * 0.28, 0, f * 0.15);
+    fLeaf.rotation.z = f * 0.18 - 0.2;
+    fgLeafGroup.add(fLeaf);
   }
-  group.add(rangoliArrival);
+  group.add(fgLeafGroup);
 
   scene.add(group);
+
+  let deliveryBurstTimer = 0;
 
   return {
     group,
     update: (time: number) => {
-      // Beacon ring gentle pulse
-      const pulse = 1.0 + Math.sin(time * 3.5) * 0.06;
-      beaconRing.scale.set(pulse, pulse, 1);
-      beaconRingMat.opacity = 0.5 + Math.sin(time * 3.5) * 0.3;
+      const flicker1 = 1.0 + Math.sin(time * 12.0) * 0.08 + Math.cos(time * 23.0) * 0.04;
+      sanctumLight.intensity = 2.5 * flicker1;
+      stoneLampLight.intensity = 1.8 * flicker1;
+      puddleGlow.intensity = 2.2 * flicker1;
+
+      const pulse = 1.0 + Math.sin(time * 4.0) * 0.06;
+      pulseRing.scale.set(pulse, pulse, 1);
+      pulseRingMat.opacity = 0.55 + Math.sin(time * 4.0) * 0.3;
+
+      if (deliveryBurstTimer > 0) {
+        deliveryBurstTimer -= 0.016;
+      }
     },
-    triggerDeliveryEffect: (count: number) => {
-      // Warm burst on delivery
-      shrineLight.intensity = 2.6;
-      setTimeout(() => {
-        shrineLight.intensity = 1.4;
-      }, 400);
+    triggerDeliveryEffect: (_count: number) => {
+      deliveryBurstTimer = 1.0;
+      pulseRing.scale.set(1.8, 1.8, 1);
     },
   };
 }

@@ -23,6 +23,10 @@ export class PresentationAudio {
     }
   }
 
+  public resume(): void {
+    this.init();
+  }
+
   public isMuted(): boolean {
     return this.muted;
   }

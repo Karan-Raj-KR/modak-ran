@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { createWickerTexture } from './textures';
 
 export interface MushakInstance {
   root: THREE.Group;
@@ -17,27 +18,30 @@ export interface MushakInstance {
 export function createMushak(scene: THREE.Scene): MushakInstance {
   const root = new THREE.Group();
 
-  // Curated color palette
+  // Curated color palette matching the approved visual specification
   const colors = {
-    fur: 0x7c8c9e,          // Mouse grey-blue fur
-    innerEar: 0xefa7a0,     // Soft pink inner ear
-    creamBelly: 0xf5ebd7,   // Warm cream belly patch
-    nose: 0x332220,         // Dark truffle nose
+    fur: 0x8291a0,          // Expressive soft mouse grey
+    innerEar: 0xf5aba4,     // Large vibrant soft pink inner ear
+    creamBelly: 0xfbf6ea,   // Warm cream belly patch
+    nose: 0x3d2724,         // Dark truffle nose
     eye: 0x141414,          // Glossy dark eye
     eyeHighlight: 0xffffff,
-    scarf: 0xb53e33,        // Vermilion scarf
-    basket: 0x9e7347,       // Woven wicker basket
-    basketRim: 0x825b33,
-    modak: 0xfbf6ea,        // Modak sweet
-    paw: 0xebb4ab,          // Soft paw pads
-    whisker: 0xdde3ea,
+    scarf: 0xc43729,        // Bright vermilion scarf
+    basketRim: 0x7a512b,    // Wicker basket rim
+    modak: 0xfdf7ec,        // Cream modak sweet
+    modakTip: 0xf29f27,     // Saffron tip
+    paw: 0xf2bbb3,          // Soft pink paw pads
+    whisker: 0xe6ecf2,
+    dust: 0xe5ceb0,         // Courtyard sandstone dust
   };
+
+  const texWicker = createWickerTexture();
 
   // Materials
   const matFur = new THREE.MeshStandardMaterial({
     color: colors.fur,
-    roughness: 0.72,
-    metalness: 0.05,
+    roughness: 0.68,
+    metalness: 0.04,
   });
 
   const matInnerEar = new THREE.MeshStandardMaterial({
@@ -47,12 +51,12 @@ export function createMushak(scene: THREE.Scene): MushakInstance {
 
   const matBelly = new THREE.MeshStandardMaterial({
     color: colors.creamBelly,
-    roughness: 0.8,
+    roughness: 0.78,
   });
 
   const matNose = new THREE.MeshStandardMaterial({
     color: colors.nose,
-    roughness: 0.4,
+    roughness: 0.35,
   });
 
   const matEye = new THREE.MeshBasicMaterial({
@@ -65,12 +69,12 @@ export function createMushak(scene: THREE.Scene): MushakInstance {
 
   const matScarf = new THREE.MeshStandardMaterial({
     color: colors.scarf,
-    roughness: 0.65,
+    roughness: 0.62,
   });
 
   const matBasket = new THREE.MeshStandardMaterial({
-    color: colors.basket,
-    roughness: 0.82,
+    map: texWicker,
+    roughness: 0.8,
   });
 
   const matBasketRim = new THREE.MeshStandardMaterial({
@@ -80,7 +84,12 @@ export function createMushak(scene: THREE.Scene): MushakInstance {
 
   const matModak = new THREE.MeshStandardMaterial({
     color: colors.modak,
-    roughness: 0.5,
+    roughness: 0.42,
+  });
+
+  const matModakTip = new THREE.MeshStandardMaterial({
+    color: colors.modakTip,
+    roughness: 0.45,
   });
 
   const matPaw = new THREE.MeshStandardMaterial({
@@ -89,72 +98,75 @@ export function createMushak(scene: THREE.Scene): MushakInstance {
   });
 
   // Contact blob shadow on ground
-  const shadowGeo = new THREE.PlaneGeometry(1.1, 1.5);
+  const shadowGeo = new THREE.PlaneGeometry(1.3, 1.7);
   const shadowMat = new THREE.MeshBasicMaterial({
-    color: 0x070b14,
+    color: 0x0a0f18,
     transparent: true,
-    opacity: 0.5,
+    opacity: 0.52,
   });
   const contactShadow = new THREE.Mesh(shadowGeo, shadowMat);
   contactShadow.rotation.x = -Math.PI / 2;
   contactShadow.position.set(0, 0.012, 0);
   root.add(contactShadow);
 
-  // Scaled Hero Character Body Hierarchy (~1.3x scaled for visual impact)
-  const scaleFactor = 1.32;
+  // Scaled Hero Character Group (~1.4x for clear, expressive visual impact)
   const characterGroup = new THREE.Group();
-  characterGroup.scale.set(scaleFactor, scaleFactor, scaleFactor);
+  characterGroup.scale.set(1.4, 1.4, 1.4);
   root.add(characterGroup);
 
   const bodyPivot = new THREE.Group();
-  bodyPivot.position.y = 0.38;
+  bodyPivot.position.y = 0.42;
   characterGroup.add(bodyPivot);
 
-  // 1. Pear-shaped Body (smooth, cute form)
+  // 1. Pear-shaped Upright Body
   const bodyGeo = new THREE.SphereGeometry(0.38, 20, 20);
-  bodyGeo.scale(0.88, 0.96, 1.28);
+  bodyGeo.scale(0.85, 1.05, 0.95);
   const bodyMesh = new THREE.Mesh(bodyGeo, matFur);
   bodyMesh.castShadow = true;
   bodyPivot.add(bodyMesh);
 
-  // Cream Belly Patch
+  // Cream Belly & Chest Patch
   const bellyGeo = new THREE.SphereGeometry(0.32, 16, 16);
-  bellyGeo.scale(0.78, 0.82, 1.12);
+  bellyGeo.scale(0.74, 0.95, 0.78);
   const bellyMesh = new THREE.Mesh(bellyGeo, matBelly);
-  bellyMesh.position.set(0, -0.06, 0.08);
+  bellyMesh.position.set(0, -0.04, 0.16);
   bodyPivot.add(bellyMesh);
 
-  // 2. Head (Expressive, cute proportions)
+  // 2. Expressive Head
   const headPivot = new THREE.Group();
-  headPivot.position.set(0, 0.18, 0.46);
+  headPivot.position.set(0, 0.28, 0.22);
   bodyPivot.add(headPivot);
 
-  const headGeo = new THREE.SphereGeometry(0.31, 20, 20);
-  headGeo.scale(0.96, 0.95, 1.12);
+  const headGeo = new THREE.SphereGeometry(0.32, 20, 20);
+  headGeo.scale(0.96, 0.94, 1.08);
   const headMesh = new THREE.Mesh(headGeo, matFur);
   headMesh.castShadow = true;
   headPivot.add(headMesh);
 
-  // Tapered Snout
-  const snoutGeo = new THREE.ConeGeometry(0.18, 0.34, 16);
+  // Cute Tapered Snout
+  const snoutGeo = new THREE.ConeGeometry(0.17, 0.32, 16);
   snoutGeo.rotateX(Math.PI / 2);
   const snoutMesh = new THREE.Mesh(snoutGeo, matFur);
-  snoutMesh.position.set(0, -0.06, 0.3);
+  snoutMesh.position.set(0, -0.06, 0.26);
   snoutMesh.castShadow = true;
   headPivot.add(snoutMesh);
 
   // Nose tip
-  const noseMesh = new THREE.Mesh(new THREE.SphereGeometry(0.052, 10, 10), matNose);
-  noseMesh.position.set(0, -0.05, 0.48);
+  const noseMesh = new THREE.Mesh(new THREE.SphereGeometry(0.052, 12, 12), matNose);
+  noseMesh.position.set(0, -0.05, 0.43);
   headPivot.add(noseMesh);
 
   // Whiskers
-  const matWhisker = new THREE.LineBasicMaterial({ color: colors.whisker, transparent: true, opacity: 0.6 });
-  for (let w = -1; w <= 1; w += 2) {
+  const matWhisker = new THREE.LineBasicMaterial({
+    color: colors.whisker,
+    transparent: true,
+    opacity: 0.75,
+  });
+  for (let side = -1; side <= 1; side += 2) {
     for (let i = -1; i <= 1; i++) {
       const pts = [
-        new THREE.Vector3(w * 0.08, -0.06 + i * 0.02, 0.42),
-        new THREE.Vector3(w * 0.28, -0.05 + i * 0.04, 0.44),
+        new THREE.Vector3(side * 0.08, -0.06 + i * 0.02, 0.38),
+        new THREE.Vector3(side * 0.35, -0.04 + i * 0.05, 0.44),
       ];
       const wGeo = new THREE.BufferGeometry().setFromPoints(pts);
       const whiskerLine = new THREE.Line(wGeo, matWhisker);
@@ -162,44 +174,45 @@ export function createMushak(scene: THREE.Scene): MushakInstance {
     }
   }
 
-  // Large Glossy Eyes
-  const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.062, 12, 12), matEye);
-  eyeL.position.set(-0.17, 0.09, 0.22);
+  // Large Glossy Black Eyes with Catchlights
+  const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.068, 14, 14), matEye);
+  eyeL.position.set(-0.18, 0.1, 0.2);
   headPivot.add(eyeL);
 
-  const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.062, 12, 12), matEye);
-  eyeR.position.set(0.17, 0.09, 0.22);
+  const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.068, 14, 14), matEye);
+  eyeR.position.set(0.18, 0.1, 0.2);
   headPivot.add(eyeR);
 
-  // White Eye Catchlights
-  const hLiteL = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), matEyeHighlight);
-  hLiteL.position.set(-0.19, 0.11, 0.26);
+  // Catchlight highlights
+  const hLiteL = new THREE.Mesh(new THREE.SphereGeometry(0.024, 8, 8), matEyeHighlight);
+  hLiteL.position.set(-0.195, 0.12, 0.245);
   headPivot.add(hLiteL);
 
-  const hLiteR = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), matEyeHighlight);
-  hLiteR.position.set(0.19, 0.11, 0.26);
+  const hLiteR = new THREE.Mesh(new THREE.SphereGeometry(0.024, 8, 8), matEyeHighlight);
+  hLiteR.position.set(0.195, 0.12, 0.245);
   headPivot.add(hLiteR);
 
-  // Broad Rounded Ears with Soft Pink Inner Surfaces
+  // Prominent Large Rounded Ears with Soft Pink Inner Surfaces
+  // Angled so the bright pink interior is clearly visible from 3/4 elevated perspective
   const earL = new THREE.Group();
-  earL.position.set(-0.25, 0.25, 0.06);
-  earL.rotation.set(-0.1, -0.28, -0.2);
+  earL.position.set(-0.28, 0.28, 0.04);
+  earL.rotation.set(-0.1, -0.42, -0.2);
   headPivot.add(earL);
 
-  const earOuterGeo = new THREE.CylinderGeometry(0.21, 0.21, 0.04, 20);
+  const earOuterGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.04, 24);
   earOuterGeo.rotateX(Math.PI / 2);
   const earMeshL = new THREE.Mesh(earOuterGeo, matFur);
   earMeshL.castShadow = true;
   earL.add(earMeshL);
 
-  const earInnerGeo = new THREE.CircleGeometry(0.15, 16);
+  const earInnerGeo = new THREE.CircleGeometry(0.19, 20);
   const earInnerL = new THREE.Mesh(earInnerGeo, matInnerEar);
   earInnerL.position.z = 0.022;
   earL.add(earInnerL);
 
   const earR = new THREE.Group();
-  earR.position.set(0.25, 0.25, 0.06);
-  earR.rotation.set(-0.1, 0.28, 0.2);
+  earR.position.set(0.28, 0.28, 0.04);
+  earR.rotation.set(-0.1, 0.42, 0.2);
   headPivot.add(earR);
 
   const earMeshR = new THREE.Mesh(earOuterGeo, matFur);
@@ -210,93 +223,158 @@ export function createMushak(scene: THREE.Scene): MushakInstance {
   earInnerR.position.z = 0.022;
   earR.add(earInnerR);
 
-  // 3. Vermilion Scarf with Animated Flutter Tails
+  // 3. Vermilion Scarf with Dynamic Flutter Tail
   const scarfCollar = new THREE.Mesh(
-    new THREE.TorusGeometry(0.28, 0.07, 10, 20),
+    new THREE.TorusGeometry(0.27, 0.08, 12, 24),
     matScarf
   );
   scarfCollar.rotation.x = Math.PI / 2;
-  scarfCollar.position.set(0, 0.11, 0.32);
+  scarfCollar.position.set(0, 0.16, 0.16);
   bodyPivot.add(scarfCollar);
 
-  const scarfTail = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.04, 0.3), matScarf);
-  scarfTail.position.set(0.2, 0.07, 0.18);
-  scarfTail.rotation.set(0.3, 0.4, 0.2);
-  bodyPivot.add(scarfTail);
+  const scarfTailPivot = new THREE.Group();
+  scarfTailPivot.position.set(0.18, 0.14, -0.06);
+  bodyPivot.add(scarfTailPivot);
 
-  // 4. Curved Tube Tail with follow-through
-  const tailCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0, 0, -0.46),
-    new THREE.Vector3(0, 0.1, -0.72),
-    new THREE.Vector3(0.09, 0.28, -0.92),
-    new THREE.Vector3(0.16, 0.44, -1.08),
-  ]);
-  const tailGeo = new THREE.TubeGeometry(tailCurve, 14, 0.038, 10, false);
-  const tailMesh = new THREE.Mesh(tailGeo, matFur);
-  tailMesh.castShadow = true;
-  bodyPivot.add(tailMesh);
+  const scarfTail = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.04, 0.42), matScarf);
+  scarfTail.position.set(0.05, -0.04, -0.18);
+  scarfTail.rotation.set(0.2, 0.4, 0.2);
+  scarfTailPivot.add(scarfTail);
 
-  // 5. Four Running Paws
-  const pawGeo = new THREE.SphereGeometry(0.095, 10, 10);
-  pawGeo.scale(0.8, 0.7, 1.2);
-
-  const pawFL = new THREE.Mesh(pawGeo, matPaw);
-  pawFL.position.set(-0.23, -0.32, 0.26);
-  characterGroup.add(pawFL);
-
-  const pawFR = new THREE.Mesh(pawGeo, matPaw);
-  pawFR.position.set(0.23, -0.32, 0.26);
-  characterGroup.add(pawFR);
-
-  const pawBL = new THREE.Mesh(pawGeo, matPaw);
-  pawBL.position.set(-0.26, -0.32, -0.23);
-  characterGroup.add(pawBL);
-
-  const pawBR = new THREE.Mesh(pawGeo, matPaw);
-  pawBR.position.set(0.26, -0.32, -0.23);
-  characterGroup.add(pawBR);
-
-  // 6. Woven Backpack Basket Carrying 0-6 Miniature Modaks
+  // 4. Woven Backpack Basket Strapped on Back (holding 0-6 Modaks)
   const basketGroup = new THREE.Group();
-  basketGroup.position.set(0, 0.34, -0.14);
+  basketGroup.position.set(0, 0.12, -0.34);
   bodyPivot.add(basketGroup);
 
   const basketBody = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.26, 0.19, 0.32, 16, 1, true),
+    new THREE.CylinderGeometry(0.29, 0.22, 0.36, 18, 1, true),
     matBasket
   );
   basketBody.castShadow = true;
   basketGroup.add(basketBody);
 
-  const basketBottom = new THREE.Mesh(new THREE.CircleGeometry(0.19, 16), matBasket);
+  const basketBottom = new THREE.Mesh(new THREE.CircleGeometry(0.22, 18), matBasketRim);
   basketBottom.rotation.x = Math.PI / 2;
-  basketBottom.position.y = -0.16;
+  basketBottom.position.y = -0.18;
   basketGroup.add(basketBottom);
 
-  const basketRim = new THREE.Mesh(new THREE.TorusGeometry(0.26, 0.035, 10, 20), matBasketRim);
+  const basketRim = new THREE.Mesh(new THREE.TorusGeometry(0.29, 0.04, 10, 24), matBasketRim);
   basketRim.rotation.x = Math.PI / 2;
-  basketRim.position.y = 0.16;
+  basketRim.position.y = 0.18;
   basketRim.castShadow = true;
   basketGroup.add(basketRim);
 
-  // 6 Mini Modaks inside basket
-  const basketModaks: THREE.Mesh[] = [];
-  const miniGeo = new THREE.ConeGeometry(0.08, 0.13, 8);
-  const bPositions: [number, number, number][] = [
-    [-0.09, 0.06, -0.07],
-    [0.09, 0.06, -0.07],
-    [-0.09, 0.06, 0.07],
-    [0.09, 0.06, 0.07],
-    [0.0, 0.13, 0.0],
-    [0.0, 0.18, -0.03],
+  const strapGeo = new THREE.TorusGeometry(0.3, 0.025, 8, 16, Math.PI);
+  const strapL = new THREE.Mesh(strapGeo, matBasketRim);
+  strapL.position.set(-0.14, 0.04, 0.14);
+  strapL.rotation.y = Math.PI / 2;
+  basketGroup.add(strapL);
+
+  const strapR = new THREE.Mesh(strapGeo, matBasketRim);
+  strapR.position.set(0.14, 0.04, 0.14);
+  strapR.rotation.y = Math.PI / 2;
+  basketGroup.add(strapR);
+
+  // 6 Mini Modaks proudly peeking above the basket rim
+  const basketModaks: THREE.Group[] = [];
+  const modakPositions: [number, number, number][] = [
+    [-0.1, 0.24, -0.08],
+    [0.1, 0.24, -0.08],
+    [-0.1, 0.24, 0.08],
+    [0.1, 0.24, 0.08],
+    [0.0, 0.32, 0.0],
+    [0.0, 0.39, -0.04],
   ];
 
   for (let i = 0; i < 6; i++) {
-    const mini = new THREE.Mesh(miniGeo, matModak);
-    mini.position.set(bPositions[i][0], bPositions[i][1], bPositions[i][2]);
-    mini.visible = false;
-    basketGroup.add(mini);
-    basketModaks.push(mini);
+    const miniG = new THREE.Group();
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.16, 8), matModak);
+    cone.castShadow = true;
+    miniG.add(cone);
+
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), matModakTip);
+    tip.position.y = 0.09;
+    miniG.add(tip);
+
+    miniG.position.set(modakPositions[i][0], modakPositions[i][1], modakPositions[i][2]);
+    miniG.visible = false;
+    basketGroup.add(miniG);
+    basketModaks.push(miniG);
+  }
+
+  // 5. Curved Mouse Tail
+  const tailCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0, -0.15, -0.32),
+    new THREE.Vector3(0, -0.1, -0.62),
+    new THREE.Vector3(0.1, 0.12, -0.85),
+    new THREE.Vector3(0.2, 0.32, -1.05),
+  ]);
+  const tailGeo = new THREE.TubeGeometry(tailCurve, 14, 0.038, 8, false);
+  const tailMesh = new THREE.Mesh(tailGeo, matFur);
+  tailMesh.castShadow = true;
+  bodyPivot.add(tailMesh);
+
+  // 6. Running Paws: Two Front Paws (hands) & Two Running Hind Feet
+  const pawFrontGeo = new THREE.SphereGeometry(0.08, 10, 10);
+  pawFrontGeo.scale(0.8, 0.7, 1.2);
+
+  const pawFL = new THREE.Mesh(pawFrontGeo, matPaw);
+  pawFL.position.set(-0.18, 0.05, 0.24);
+  bodyPivot.add(pawFL);
+
+  const pawFR = new THREE.Mesh(pawFrontGeo, matPaw);
+  pawFR.position.set(0.18, 0.05, 0.24);
+  bodyPivot.add(pawFR);
+
+  // Hind running feet
+  const pawHindGeo = new THREE.SphereGeometry(0.095, 10, 10);
+  pawHindGeo.scale(0.85, 0.65, 1.35);
+
+  const footL = new THREE.Mesh(pawHindGeo, matPaw);
+  footL.position.set(-0.16, -0.36, 0.02);
+  characterGroup.add(footL);
+
+  const footR = new THREE.Mesh(pawHindGeo, matPaw);
+  footR.position.set(0.16, -0.36, 0.02);
+  characterGroup.add(footR);
+
+  // 7. Dust Puff Trail Particles
+  const maxDust = 16;
+  const dustGeo = new THREE.SphereGeometry(0.065, 6, 6);
+  const dustMat = new THREE.MeshBasicMaterial({
+    color: colors.dust,
+    transparent: true,
+    opacity: 0.6,
+  });
+
+  const dustPool: { mesh: THREE.Mesh; life: number; maxLife: number; vx: number; vy: number; vz: number }[] = [];
+  for (let d = 0; d < maxDust; d++) {
+    const dMesh = new THREE.Mesh(dustGeo, dustMat.clone());
+    dMesh.visible = false;
+    scene.add(dMesh);
+    dustPool.push({
+      mesh: dMesh,
+      life: 0,
+      maxLife: 0.45,
+      vx: 0,
+      vy: 0,
+      vz: 0,
+    });
+  }
+
+  let dustTimer = 0;
+  function spawnDust(x: number, y: number, z: number) {
+    const p = dustPool.find((item) => item.life <= 0);
+    if (p) {
+      p.life = p.maxLife;
+      p.mesh.visible = true;
+      p.mesh.position.set(x + (Math.random() - 0.5) * 0.15, y + 0.04, z + (Math.random() - 0.5) * 0.15);
+      p.mesh.scale.set(0.6, 0.6, 0.6);
+      p.vx = (Math.random() - 0.5) * 0.3;
+      p.vy = 0.2 + Math.random() * 0.2;
+      p.vz = (Math.random() - 0.5) * 0.3;
+      (p.mesh.material as THREE.MeshBasicMaterial).opacity = 0.55;
+    }
   }
 
   // Animation State
@@ -321,52 +399,70 @@ export function createMushak(scene: THREE.Scene): MushakInstance {
         while (diff > Math.PI) diff -= Math.PI * 2;
         root.rotation.y += diff * Math.min(1.0, delta * 18);
 
-        walkPhase += delta * speed * 2.8;
+        walkPhase += delta * speed * 3.2;
+
+        dustTimer += delta;
+        const dustRate = isScurrying ? 0.05 : 0.12;
+        if (dustTimer >= dustRate) {
+          dustTimer = 0;
+          spawnDust(root.position.x, 0, root.position.z);
+        }
       }
 
-      // Step animations for 4 paws
-      const stepAmp = isMoving ? 0.13 : 0;
-      const pawFreq = walkPhase * 2.2;
+      // Update dust particles
+      dustPool.forEach((p) => {
+        if (p.life > 0) {
+          p.life -= delta;
+          p.mesh.position.x += p.vx * delta;
+          p.mesh.position.y += p.vy * delta;
+          p.mesh.position.z += p.vz * delta;
+          const prog = 1 - p.life / p.maxLife;
+          const s = 0.6 + prog * 1.2;
+          p.mesh.scale.set(s, s, s);
+          (p.mesh.material as THREE.MeshBasicMaterial).opacity = (1 - prog) * 0.5;
+          if (p.life <= 0) {
+            p.mesh.visible = false;
+          }
+        }
+      });
 
-      pawFL.position.y = -0.32 + Math.max(0, Math.sin(pawFreq)) * stepAmp;
-      pawFL.position.z = 0.26 + Math.cos(pawFreq) * (stepAmp * 0.8);
+      // Bipedal step cycles for hind feet
+      const stepAmp = isMoving ? 0.16 : 0;
+      const footFreq = walkPhase * 2.4;
 
-      pawBR.position.y = -0.32 + Math.max(0, Math.sin(pawFreq)) * stepAmp;
-      pawBR.position.z = -0.23 + Math.cos(pawFreq) * (stepAmp * 0.8);
+      footL.position.y = -0.36 + Math.max(0, Math.sin(footFreq)) * stepAmp;
+      footL.position.z = 0.02 + Math.cos(footFreq) * (stepAmp * 1.1);
 
-      pawFR.position.y = -0.32 + Math.max(0, Math.sin(pawFreq + Math.PI)) * stepAmp;
-      pawFR.position.z = 0.26 + Math.cos(pawFreq + Math.PI) * (stepAmp * 0.8);
+      footR.position.y = -0.36 + Math.max(0, Math.sin(footFreq + Math.PI)) * stepAmp;
+      footR.position.z = 0.02 + Math.cos(footFreq + Math.PI) * (stepAmp * 1.1);
 
-      pawBL.position.y = -0.32 + Math.max(0, Math.sin(pawFreq + Math.PI)) * stepAmp;
-      pawBL.position.z = -0.23 + Math.cos(pawFreq + Math.PI) * (stepAmp * 0.8);
+      // Front paws pumping
+      pawFL.position.z = 0.24 + Math.cos(footFreq + Math.PI) * 0.06;
+      pawFR.position.z = 0.24 + Math.cos(footFreq) * 0.06;
 
-      // Body vertical bobbing and breathing
+      // Body vertical bobbing and forward running lean
       if (isMoving) {
-        bodyPivot.position.y = 0.38 + Math.abs(Math.sin(pawFreq)) * 0.055;
-        tailMesh.rotation.y = Math.sin(walkPhase * 1.6) * 0.4;
+        bodyPivot.position.y = 0.42 + Math.abs(Math.sin(footFreq)) * 0.06;
+        bodyPivot.rotation.x = isScurrying ? 0.32 : 0.16;
+        tailMesh.rotation.y = Math.sin(walkPhase * 1.8) * 0.4;
+        scarfTailPivot.rotation.y = Math.sin(walkPhase * 2.0) * 0.5;
+        scarfTail.rotation.z = 0.2 + Math.sin(walkPhase * 2.2) * 0.3;
       } else {
-        // Idle breathing and ear twitch
-        bodyPivot.position.y = 0.38 + Math.sin(Date.now() * 0.003) * 0.018;
+        // Idle breathing and subtle ear twitch
+        bodyPivot.position.y = 0.42 + Math.sin(Date.now() * 0.003) * 0.015;
+        bodyPivot.rotation.x = THREE.MathUtils.lerp(bodyPivot.rotation.x, 0, delta * 10);
         tailMesh.rotation.y = Math.sin(Date.now() * 0.002) * 0.12;
         earL.rotation.z = -0.2 + Math.sin(Date.now() * 0.005) * 0.03;
         earR.rotation.z = 0.2 - Math.sin(Date.now() * 0.005) * 0.03;
-      }
-
-      // Scurry sprint posture
-      if (isScurrying) {
-        bodyPivot.rotation.x = THREE.MathUtils.lerp(bodyPivot.rotation.x, 0.28, delta * 20);
-        scarfTail.rotation.z = Math.sin(Date.now() * 0.05) * 0.5 + 0.35;
-      } else {
-        bodyPivot.rotation.x = THREE.MathUtils.lerp(bodyPivot.rotation.x, 0, delta * 12);
-        scarfTail.rotation.z = THREE.MathUtils.lerp(scarfTail.rotation.z, 0.2, delta * 10);
+        scarfTailPivot.rotation.y = THREE.MathUtils.lerp(scarfTailPivot.rotation.y, 0, delta * 8);
       }
 
       // Delivery celebration hop
       if (cheerTimer > 0) {
         cheerTimer -= delta;
-        const jumpY = Math.sin(((0.4 - cheerTimer) / 0.4) * Math.PI) * 0.35;
+        const jumpY = Math.sin(((0.45 - cheerTimer) / 0.45) * Math.PI) * 0.4;
         bodyPivot.position.y += jumpY;
-        root.rotation.y += delta * 12;
+        root.rotation.y += delta * 14;
       }
     },
 
@@ -377,13 +473,13 @@ export function createMushak(scene: THREE.Scene): MushakInstance {
     },
 
     triggerDeliveryCheer: () => {
-      cheerTimer = 0.4;
+      cheerTimer = 0.45;
     },
 
     reset: (x: number = 0, z: number = 6.0, rotation: number = -Math.PI) => {
-      root.position.set(x, 0.38, z);
+      root.position.set(x, 0.42, z);
       root.rotation.set(0, rotation, 0);
-      bodyPivot.position.set(0, 0.38, 0);
+      bodyPivot.position.set(0, 0.42, 0);
       bodyPivot.rotation.set(0, 0, 0);
       cheerTimer = 0;
       walkPhase = 0;

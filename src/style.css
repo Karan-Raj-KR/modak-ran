@@ -1,17 +1,20 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
 
 :root {
-  --bg-twilight: #0d121d;
+  --bg-twilight: #1d172e;
   --gold-primary: #f5be3d;
-  --gold-glow: rgba(245, 190, 61, 0.45);
-  --sandstone: #e8cdab;
-  --sandstone-border: rgba(232, 205, 171, 0.35);
-  --vermilion: #b54338;
-  --indigo-deep: #1b213b;
-  --panel-bg: rgba(20, 26, 44, 0.88);
+  --gold-light: #ffe599;
+  --gold-dark: #b88628;
+  --gold-glow: rgba(245, 190, 61, 0.4);
+  --sandstone: #e5cba6;
+  --sandstone-border: rgba(229, 203, 166, 0.35);
+  --panel-bg: rgba(22, 20, 30, 0.85);
+  --panel-dark: rgba(14, 12, 20, 0.92);
   --text-main: #fcf9f2;
-  --text-muted: #b5c0d0;
-  --font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --text-gold: #f7d58a;
+  --text-muted: #b8afc8;
+  --font-serif: 'Cinzel', 'Playfair Display', Georgia, serif;
+  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 * {
@@ -28,7 +31,7 @@ html, body {
   height: 100%;
   overflow: hidden;
   background-color: var(--bg-twilight);
-  font-family: var(--font-family);
+  font-family: var(--font-sans);
   color: var(--text-main);
 }
 
@@ -64,145 +67,292 @@ canvas {
 }
 
 /* -------------------------------------------------------------------------- */
-/* UNIFIED FESTIVAL HUD HEADER (NOT A DASHBOARD)                              */
+/* 1. TOP-LEFT: ORNATE GOLD PLAQUE "MODAK RUN"                                */
 /* -------------------------------------------------------------------------- */
-.festival-hud {
+.ornate-plaque {
   position: absolute;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 20px;
+  left: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
   pointer-events: auto;
   z-index: 12;
 }
 
-.hud-bar {
+.plaque-top-icon {
+  margin-bottom: -9px;
+  z-index: 2;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.6));
+}
+
+.plaque-text {
+  background: var(--panel-dark);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 2px solid var(--gold-primary);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.8),
+              0 6px 20px rgba(0, 0, 0, 0.6),
+              inset 0 0 12px rgba(245, 190, 61, 0.22);
+  border-radius: 28px;
+  padding: 8px 24px 7px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.plaque-wing {
+  color: var(--gold-primary);
+  font-size: 16px;
+  opacity: 0.85;
+}
+
+.plaque-title {
+  font-family: var(--font-serif);
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #fff6d9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), 0 0 10px rgba(245, 190, 61, 0.55);
+}
+
+/* -------------------------------------------------------------------------- */
+/* 2. TOP-CENTER: COUNTDOWN TIMER PILL                                        */
+/* -------------------------------------------------------------------------- */
+.timer-pill {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 28px;
+  pointer-events: auto;
+  z-index: 12;
+}
+
+.timer-digits {
+  font-family: var(--font-sans);
+  font-size: 24px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.04em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+/* -------------------------------------------------------------------------- */
+/* 3. TOP-RIGHT: SCORE, BASKET, SOUND & PAUSE PILL                            */
+/* -------------------------------------------------------------------------- */
+.stats-pill {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  padding: 7px 18px;
   display: flex;
   align-items: center;
   gap: 16px;
-  background: var(--panel-bg);
+  pointer-events: auto;
+  z-index: 12;
+}
+
+.dark-hud-pill {
+  background: var(--panel-dark);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--sandstone-border);
+  border: 1px solid rgba(245, 190, 61, 0.35);
   border-radius: 40px;
-  padding: 8px 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 20px rgba(245, 190, 61, 0.08);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55),
+              inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-.hud-item {
+.pill-stat {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
 }
 
-.hud-divider {
-  width: 1px;
-  height: 22px;
-  background: rgba(232, 205, 171, 0.2);
+.icon-modak-svg {
+  filter: drop-shadow(0 2px 5px rgba(245, 190, 61, 0.6));
 }
 
-.hud-text {
-  font-size: 20px;
+.icon-basket-svg {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.stat-number {
+  font-family: var(--font-sans);
+  font-size: 19px;
   font-weight: 800;
-  color: var(--text-main);
+  color: #fff9ea;
   letter-spacing: -0.01em;
 }
 
-.hud-text-tiny {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--sandstone);
+.pill-sep {
+  width: 1px;
+  height: 20px;
+  background: rgba(245, 190, 61, 0.25);
 }
 
-.hud-label-tiny {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--sandstone);
-  text-transform: uppercase;
-}
-
-.hud-svg {
-  color: var(--sandstone);
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
-}
-
-.modak-icon {
-  filter: drop-shadow(0 2px 6px rgba(245, 190, 61, 0.5));
-}
-
-/* Elegant Modak Pip Indicators */
-.pips-row {
-  display: flex;
-  gap: 5px;
-}
-
-.modak-pip {
-  width: 13px;
-  height: 15px;
-  border-radius: 4px 4px 6px 6px;
-  border: 1.5px solid var(--sandstone);
+.pill-btn {
   background: rgba(255, 255, 255, 0.08);
-  transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.modak-pip.filled {
-  background: var(--gold-primary);
-  border-color: #ffe185;
-  box-shadow: 0 0 10px rgba(245, 190, 61, 0.65);
-  transform: scale(1.15);
-}
-
-.hud-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.hud-action-btn {
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid var(--sandstone-border);
+  border: 1px solid rgba(245, 190, 61, 0.3);
   border-radius: 50%;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--sandstone);
+  color: #f7d58a;
   cursor: pointer;
   pointer-events: auto;
   transition: all 0.18s ease;
 }
 
-.hud-action-btn:hover {
-  background: rgba(245, 190, 61, 0.2);
-  color: var(--gold-primary);
+.pill-btn:hover {
+  background: rgba(245, 190, 61, 0.25);
   border-color: var(--gold-primary);
+  color: #ffffff;
   transform: scale(1.08);
 }
 
-.hud-notice {
-  background: rgba(181, 67, 56, 0.95);
-  border: 1px solid var(--gold-primary);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 5px 16px;
-  border-radius: 20px;
-  box-shadow: 0 4px 18px rgba(181, 67, 56, 0.6);
-  animation: noticeBreath 0.4s infinite alternate;
+/* -------------------------------------------------------------------------- */
+/* 4. BOTTOM-CENTER: CONTROLS LEGEND                                          */
+/* -------------------------------------------------------------------------- */
+.bottom-legend {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  pointer-events: none;
+  z-index: 10;
 }
 
-@keyframes noticeBreath {
-  from { transform: scale(0.97); }
-  to { transform: scale(1.03); }
+.legend-line {
+  width: 42px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245, 190, 61, 0.65), transparent);
+}
+
+.legend-text {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: #e5c58a;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.85);
+  text-transform: uppercase;
 }
 
 /* -------------------------------------------------------------------------- */
-/* FESTIVAL MODAL OVERLAYS (START, PAUSE, RESULTS)                            */
+/* 5. BOTTOM-RIGHT: CIRCULAR GOLD SCURRY BUTTON                               */
+/* -------------------------------------------------------------------------- */
+.scurry-circle-btn {
+  position: absolute;
+  bottom: 24px;
+  right: 28px;
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, #261f18 0%, #15110d 100%);
+  border: 2px solid var(--gold-primary);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.8),
+              0 8px 24px rgba(0, 0, 0, 0.65),
+              inset 0 0 16px rgba(245, 190, 61, 0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 14;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.scurry-circle-btn:hover {
+  transform: scale(1.06);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.8),
+              0 10px 30px rgba(0, 0, 0, 0.75),
+              0 0 22px rgba(245, 190, 61, 0.5);
+}
+
+.scurry-circle-btn:active {
+  transform: scale(0.96);
+}
+
+.scurry-mouse-svg {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+
+.scurry-btn-label {
+  font-family: var(--font-serif);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--gold-primary);
+  margin-top: 1px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.scurry-cooldown-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+
+.ring-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 4;
+}
+
+.ring-meter {
+  fill: none;
+  stroke: var(--gold-primary);
+  stroke-width: 4;
+  stroke-dasharray: 289;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.1s linear;
+}
+
+.scurry-circle-btn.ready {
+  border-color: #ffd875;
+  box-shadow: 0 0 22px rgba(245, 190, 61, 0.5), inset 0 0 14px rgba(245, 190, 61, 0.35);
+}
+
+/* -------------------------------------------------------------------------- */
+/* 6. BASKET NOTICE BANNER                                                    */
+/* -------------------------------------------------------------------------- */
+.hud-notice {
+  position: absolute;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(181, 54, 40, 0.95);
+  border: 1px solid var(--gold-primary);
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 20px;
+  border-radius: 20px;
+  box-shadow: 0 4px 18px rgba(181, 54, 40, 0.7);
+  pointer-events: none;
+  z-index: 15;
+  animation: noticePulse 0.4s infinite alternate;
+}
+
+@keyframes noticePulse {
+  from { transform: translateX(-50%) scale(0.97); }
+  to { transform: translateX(-50%) scale(1.03); }
+}
+
+/* -------------------------------------------------------------------------- */
+/* 7. COMPACT FESTIVAL MODAL OVERLAYS                                         */
 /* -------------------------------------------------------------------------- */
 .screen-overlay {
   position: absolute;
@@ -213,105 +363,95 @@ canvas {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at center, rgba(13, 18, 29, 0.4) 0%, rgba(13, 18, 29, 0.8) 100%);
-  z-index: 20;
+  background: radial-gradient(circle at center, rgba(14, 12, 20, 0.45) 0%, rgba(14, 12, 20, 0.85) 100%);
+  z-index: 30;
   padding: 20px;
   pointer-events: auto;
 }
 
 .festival-card {
-  background: var(--panel-bg);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid var(--sandstone-border);
+  background: var(--panel-dark);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 2px solid rgba(245, 190, 61, 0.45);
   border-radius: 24px;
-  padding: 34px 40px;
-  max-width: 440px;
+  padding: 32px 38px;
+  max-width: 420px;
   width: 100%;
   text-align: center;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 35px rgba(245, 190, 61, 0.14);
-  animation: cardEntrance 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75), 0 0 35px rgba(245, 190, 61, 0.15);
   pointer-events: auto;
+  animation: cardPop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-@keyframes cardEntrance {
-  from { opacity: 0; transform: scale(0.9) translateY(16px); }
+@keyframes cardPop {
+  from { opacity: 0; transform: scale(0.9) translateY(14px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-.ornament-badge {
-  display: inline-block;
+.card-filigree {
+  font-family: var(--font-serif);
   font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
+  font-weight: 700;
+  letter-spacing: 0.18em;
   color: var(--gold-primary);
-  background: rgba(245, 190, 61, 0.12);
-  border: 1px solid rgba(245, 190, 61, 0.32);
-  padding: 4px 14px;
-  border-radius: 20px;
   margin-bottom: 12px;
 }
 
 .main-title {
-  font-size: 40px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--gold-primary);
-  text-shadow: 0 2px 14px rgba(245, 190, 61, 0.4);
+  font-family: var(--font-serif);
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #fff6dc;
+  text-shadow: 0 2px 14px rgba(245, 190, 61, 0.45);
   margin-bottom: 6px;
 }
 
 .card-heading {
-  font-size: 28px;
+  font-family: var(--font-serif);
+  font-size: 26px;
   font-weight: 800;
   color: var(--gold-primary);
   margin-bottom: 8px;
 }
 
 .subtitle-text {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--sandstone);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .summary-text {
-  font-size: 14px;
+  font-size: 13.5px;
   color: var(--text-muted);
-  line-height: 1.55;
-  margin-bottom: 24px;
+  line-height: 1.5;
+  margin-bottom: 22px;
 }
 
-.card-desc {
-  font-size: 14px;
-  color: var(--text-muted);
-  margin-bottom: 20px;
-}
-
-/* Primary Gold Shimmer Button */
 .gold-cta-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: inherit;
+  font-family: var(--font-serif);
   font-size: 16px;
   font-weight: 800;
-  padding: 14px 30px;
-  border-radius: 14px;
+  letter-spacing: 0.08em;
+  padding: 13px 28px;
+  border-radius: 12px;
   cursor: pointer;
   border: none;
-  pointer-events: auto;
   width: 100%;
-  letter-spacing: 0.03em;
-  color: #171308;
-  background: linear-gradient(135deg, #f5be3d 0%, #eb8b26 100%);
+  color: #1a1208;
+  background: linear-gradient(135deg, #f5be3d 0%, #eb8426 100%);
   box-shadow: 0 6px 24px rgba(245, 190, 61, 0.45);
   transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .gold-cta-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(245, 190, 61, 0.6);
+  box-shadow: 0 8px 30px rgba(245, 190, 61, 0.65);
 }
 
 .gold-cta-btn:active {
@@ -322,18 +462,18 @@ canvas {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: inherit;
-  font-size: 15px;
+  font-family: var(--font-serif);
+  font-size: 14px;
   font-weight: 700;
-  padding: 12px 24px;
-  border-radius: 12px;
+  letter-spacing: 0.06em;
+  padding: 11px 22px;
+  border-radius: 10px;
   cursor: pointer;
   border: 1px solid var(--sandstone-border);
   background: rgba(255, 255, 255, 0.08);
   color: var(--sandstone);
   width: 100%;
-  margin-top: 10px;
-  pointer-events: auto;
+  margin-top: 8px;
   transition: all 0.18s ease;
 }
 
@@ -341,203 +481,156 @@ canvas {
   background: rgba(255, 255, 255, 0.14);
 }
 
-.controls-legend {
+.button-column {
   display: flex;
-  justify-content: center;
-  gap: 18px;
-  margin-top: 22px;
-  font-size: 13px;
-  color: var(--text-muted);
+  flex-direction: column;
+  gap: 8px;
 }
 
-.key-cap {
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 3px 7px;
-  border-radius: 5px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--sandstone);
-}
-
-/* Results Details */
 .results-stats-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin: 20px 0;
+  gap: 12px;
+  margin: 18px 0;
 }
 
 .stat-cell {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--sandstone-border);
-  border-radius: 14px;
-  padding: 14px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(245, 190, 61, 0.25);
+  border-radius: 12px;
+  padding: 12px;
 }
 
 .stat-title {
   display: block;
+  font-family: var(--font-serif);
   font-size: 11px;
   color: var(--sandstone);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   margin-bottom: 4px;
 }
 
 .stat-number {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 800;
   color: var(--gold-primary);
 }
 
 .observation-sentence {
-  font-size: 14px;
-  color: var(--text-muted);
-  margin-bottom: 22px;
+  font-size: 13.5px;
+  color: var(--sandstone);
+  margin-bottom: 20px;
   font-style: italic;
 }
 
-.button-column {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
 /* -------------------------------------------------------------------------- */
-/* MOBILE TOUCH JOYSTICK & SCURRY BUTTON                                      */
+/* 8. MOBILE TOUCH CONTROLS                                                   */
 /* -------------------------------------------------------------------------- */
-.touch-controls {
+.touch-joystick-zone {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 180px;
-  pointer-events: none;
-  z-index: 15;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  padding: 20px 24px;
-}
-
-.joystick-zone {
-  width: 120px;
-  height: 120px;
+  bottom: 24px;
+  left: 24px;
+  width: 110px;
+  height: 110px;
   pointer-events: auto;
+  z-index: 15;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .joystick-base {
-  width: 90px;
-  height: 90px;
-  background: rgba(20, 26, 44, 0.6);
-  border: 2px solid var(--sandstone);
+  width: 86px;
+  height: 86px;
+  background: rgba(18, 15, 24, 0.7);
+  border: 2px solid var(--gold-primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
 }
 
 .joystick-thumb {
-  width: 44px;
-  height: 44px;
-  background: var(--sandstone);
+  width: 40px;
+  height: 40px;
+  background: var(--gold-primary);
   border-radius: 50%;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
   transition: transform 0.05s ease-out;
 }
 
-.touch-actions {
-  pointer-events: auto;
-}
-
-.touch-scurry-btn {
-  width: 76px;
-  height: 76px;
-  border-radius: 50%;
-  background: var(--panel-bg);
-  border: 2px solid var(--sandstone);
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  pointer-events: auto;
-  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
-}
-
-.scurry-txt {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  color: var(--sandstone);
-}
-
-.scurry-cooldown-svg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-
-.ring-bg {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.12);
-  stroke-width: 5;
-}
-
-.ring-meter {
-  fill: none;
-  stroke: var(--gold-primary);
-  stroke-width: 5;
-  stroke-dasharray: 276.46;
-  stroke-dashoffset: 276.46;
-  transition: stroke-dashoffset 0.1s linear;
-}
-
-.touch-scurry-btn.ready {
-  border-color: var(--gold-primary);
-  box-shadow: 0 0 18px rgba(245, 190, 61, 0.55);
-}
-
-.touch-scurry-btn.ready .scurry-txt {
-  color: var(--gold-primary);
-}
-
-/* Reduced Motion */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
+/* Responsive adjustments for mobile screens */
+@media (max-width: 680px) {
+  .ornate-plaque {
+    top: 8px;
+    left: 6px;
   }
-}
-
-/* Responsive Mobile Layout */
-@media (max-width: 600px) {
-  .festival-hud {
-    top: 10px;
-    width: 92%;
+  .plaque-top-icon {
+    display: none;
   }
-  .hud-bar {
-    width: 100%;
-    justify-content: space-between;
-    padding: 6px 14px;
-    gap: 10px;
+  .plaque-text {
+    padding: 4px 8px;
+    gap: 3px;
+    border-width: 1.5px;
   }
-  .hud-text {
-    font-size: 16px;
+  .plaque-wing {
+    font-size: 10px;
   }
-  .main-title {
-    font-size: 32px;
+  .plaque-title {
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+  .timer-pill {
+    top: 8px;
+    padding: 4px 10px;
+  }
+  .timer-digits {
+    font-size: 14px;
+  }
+  .stats-pill {
+    top: 8px;
+    right: 6px;
+    padding: 4px 8px;
+    gap: 6px;
+  }
+  .stat-number {
+    font-size: 13px;
+  }
+  .pill-stat svg {
+    width: 14px;
+    height: 14px;
+  }
+  .pill-sep {
+    display: none;
+  }
+  #hud-btn-sound {
+    display: none;
+  }
+  .pill-btn {
+    width: 24px;
+    height: 24px;
+  }
+  .pill-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+  .scurry-circle-btn {
+    bottom: 20px;
+    right: 20px;
+    width: 72px;
+    height: 72px;
+  }
+  .bottom-legend {
+    display: none;
   }
   .festival-card {
     padding: 24px 20px;
+    max-width: 90%;
+  }
+  .main-title {
+    font-size: 28px;
   }
 }
