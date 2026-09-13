@@ -9,6 +9,7 @@
     "test": "tsx tests/rules.test.ts && tsx tests/map.test.ts"
   },
   "dependencies": {
+    "@dimforge/rapier3d": "^0.20.0",
     "three": "^0.186.0"
   },
   "devDependencies": {
