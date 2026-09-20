@@ -67,9 +67,20 @@ export interface Prop {
   nonColliding: boolean;
 }
 
+export type RegionId = 'stall' | 'garden' | 'courtyard';
+
+export interface RegionDefinition {
+  id: RegionId;
+  label: string;
+  center: Vec3;
+  bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
+}
+
 export interface CollectibleSpawn {
   id: number;
   position: Vec3;
+  regionId?: RegionId;
+  regionLabel?: string;
 }
 
 export interface SurfaceZone {
@@ -128,9 +139,13 @@ export interface LevelDefinition {
   /** Collectible pickup locations */
   collectibles: CollectibleSpawn[];
 
+  /** Named collection regions */
+  regions?: RegionDefinition[];
+
   /** Delivery zone definition */
   deliveryZone: DeliveryZone;
 
   /** Surface traction zones */
   surfaceZones: SurfaceZone[];
 }
+

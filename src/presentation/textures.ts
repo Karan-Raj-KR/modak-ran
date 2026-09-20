@@ -322,3 +322,21 @@ export function createWickerTexture(): THREE.CanvasTexture {
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
 }
+
+/** Soft radial contact shadow, so the blob under Mushak has no hard edges. */
+export function createSoftShadowTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d')!;
+  const grad = ctx.createRadialGradient(64, 64, 2, 64, 64, 62);
+  grad.addColorStop(0.0, 'rgba(10,15,24,0.85)');
+  grad.addColorStop(0.45, 'rgba(10,15,24,0.45)');
+  grad.addColorStop(0.78, 'rgba(10,15,24,0.12)');
+  grad.addColorStop(1.0, 'rgba(10,15,24,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 128, 128);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}

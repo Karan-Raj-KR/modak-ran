@@ -162,7 +162,7 @@ export function moveCharacter(
   character.computeColliderMovement(
     physics.playerCollider,
     desiredTranslation,
-    RAPIER.QueryFilterFlags.EXCLUDE_FIXED,
+    RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
     undefined,
     undefined
   );
@@ -220,15 +220,20 @@ export function checkCollisionAt(
   pos: Vec3
 ): boolean {
   const character = physics.characterController;
+  const playerBody = physics.playerCollider.parent();
+  if (playerBody) {
+    playerBody.setTranslation(new RAPIER.Vector3(pos.x, pos.y, pos.z), true);
+  }
 
   const zeroMove = new RAPIER.Vector3(0, 0, 0);
   character.computeColliderMovement(
     physics.playerCollider,
     zeroMove,
-    RAPIER.QueryFilterFlags.EXCLUDE_FIXED,
+    RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
     undefined,
     undefined
   );
 
   return character.numComputedCollisions() > 0;
 }
+

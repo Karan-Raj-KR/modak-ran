@@ -1,0 +1,137 @@
+[
+  {
+    "name": "desktop: boots into 'ready' with a full 60s timer",
+    "ok": true,
+    "detail": "{\"phase\":\"ready\",\"time\":60,\"active\":42,\"basket\":0,\"delivered\":0,\"pos\":{\"x\":0,\"y\":0.67,\"z\":6}}"
+  },
+  {
+    "name": "desktop: 42 collectibles live before playing",
+    "ok": true,
+    "detail": "active=42"
+  },
+  {
+    "name": "desktop: Play button is clickable (not covered by another panel)",
+    "ok": true,
+    "detail": "true"
+  },
+  {
+    "name": "desktop: timer has not drained while the start screen is up",
+    "ok": true,
+    "detail": "timer=01:00"
+  },
+  {
+    "name": "desktop: start overlay clears on Play",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: round timer is running after Play",
+    "ok": true,
+    "detail": "timeRemaining=59.80000000000001"
+  },
+  {
+    "name": "desktop: all 42 rendered modaks sit on their authoritative XZ",
+    "ok": true,
+    "detail": "{\"count\":42,\"mismatched\":0,\"sample\":[],\"sunk\":0}"
+  },
+  {
+    "name": "desktop: no modak floats above ground",
+    "ok": true,
+    "detail": "sunk=0"
+  },
+  {
+    "name": "desktop: six pickups each increment the basket exactly once",
+    "ok": true,
+    "detail": "[{\"id\":0,\"before\":0,\"after\":1,\"visible\":true},{\"id\":1,\"before\":1,\"after\":2,\"visible\":true},{\"id\":2,\"before\":2,\"after\":3,\"visible\":true},{\"id\":12,\"before\":3,\"after\":4,\"visible\":true},{\"id\":13,\"before\":4,\"after\":5,\"visible\":true},{\"id\":3,\"before\":5,\"after\":6,\"visible\":true}]"
+  },
+  {
+    "name": "desktop: full basket blocks pickup without consuming the item",
+    "ok": true,
+    "detail": "{\"basket\":6,\"id10Active\":true}"
+  },
+  {
+    "name": "desktop: basket-full cue is shown and worded correctly",
+    "ok": true,
+    "detail": "➤ Basket full — return to the pandal"
+  },
+  {
+    "name": "desktop: pickup registers during maximum-speed scurry",
+    "ok": true,
+    "detail": "{\"bursts\":1,\"peakSpeed\":8.46,\"basket\":1,\"pos\":{\"x\":-0.04,\"z\":4.82}}"
+  },
+  {
+    "name": "desktop: entering the pad unloads the whole basket exactly once",
+    "ok": true,
+    "detail": "{\"onEnter\":{\"basket\":0,\"delivered\":3,\"points\":30,\"bonuses\":0},\"lingered\":{\"basket\":0,\"delivered\":3,\"points\":30,\"bonuses\":0}}"
+  },
+  {
+    "name": "desktop: score matches delivered x10 + fullBasketBonus x30",
+    "ok": true,
+    "detail": "points=30 expected=30 (delivered 3, bonuses 0)"
+  },
+  {
+    "name": "desktop: lingering in the pad cannot double-score",
+    "ok": true,
+    "detail": "30 -> 30"
+  },
+  {
+    "name": "desktop: collecting is possible again immediately after delivery",
+    "ok": true,
+    "detail": "{\"before\":0,\"after\":3}"
+  },
+  {
+    "name": "desktop: pause halts the timer and movement, resume restores play",
+    "ok": true,
+    "detail": "{\"pausedPhase\":\"paused\",\"timeDriftWhilePaused\":0,\"movedWhilePaused\":0,\"resumedPhase\":\"playing\"}"
+  },
+  {
+    "name": "desktop: pause overlay appears only while paused",
+    "ok": true,
+    "detail": "false -> true"
+  },
+  {
+    "name": "desktop: restart resets basket, deliveries, score, timer and all 42 pickups",
+    "ok": true,
+    "detail": "{\"from\":2,\"to\":3,\"basket\":0,\"active\":42,\"time\":59.80000000000001}"
+  },
+  {
+    "name": "desktop: every modak is on the ground again after restart",
+    "ok": true,
+    "detail": "hidden=0"
+  },
+  {
+    "name": "desktop: collecting works again after a restart without a refresh",
+    "ok": true,
+    "detail": "basket=1"
+  },
+  {
+    "name": "desktop: the round ends on the timer and produces a summary",
+    "ok": true,
+    "detail": "{\"deliveredCount\":0,\"pointsScore\":0,\"fullBasketBonuses\":0,\"rushOrdersCompleted\":0,\"rushOrdersIssued\":0,\"basketRemainingAtEnd\":1}"
+  },
+  {
+    "name": "desktop: results screen is shown with delivered total and local best",
+    "ok": true,
+    "detail": "{\"pts\":\"0\",\"del\":\"0 × 10 = 0 pts\",\"best\":\"0 pts\"}"
+  },
+  {
+    "name": "desktop: Play again starts a fresh round from the results screen",
+    "ok": true,
+    "detail": "{\"phase\":\"playing\",\"time\":59.70000000000002}"
+  },
+  {
+    "name": "desktop: nothing overflows the viewport (no page scroll)",
+    "ok": true,
+    "detail": "{\"sw\":1280,\"cw\":1280,\"sh\":800,\"ch\":800,\"bodyOverflow\":\"hidden\"}"
+  },
+  {
+    "name": "desktop: no console errors during the run",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: no uncaught page exceptions",
+    "ok": true,
+    "detail": ""
+  }
+]

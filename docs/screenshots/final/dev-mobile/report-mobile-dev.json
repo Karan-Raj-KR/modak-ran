@@ -1,0 +1,147 @@
+[
+  {
+    "name": "mobile: boots into 'ready' with a full 60s timer",
+    "ok": true,
+    "detail": "{\"phase\":\"ready\",\"time\":60,\"active\":42,\"basket\":0,\"delivered\":0,\"pos\":{\"x\":0,\"y\":0.67,\"z\":6}}"
+  },
+  {
+    "name": "mobile: 42 collectibles live before playing",
+    "ok": true,
+    "detail": "active=42"
+  },
+  {
+    "name": "mobile: Play button is clickable (not covered by another panel)",
+    "ok": true,
+    "detail": "true"
+  },
+  {
+    "name": "mobile: timer has not drained while the start screen is up",
+    "ok": true,
+    "detail": "timer=01:00"
+  },
+  {
+    "name": "mobile: start overlay clears on Play",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "mobile: round timer is running after Play",
+    "ok": true,
+    "detail": "timeRemaining=59.70000000000002"
+  },
+  {
+    "name": "mobile: on-screen joystick is shown on a touch device",
+    "ok": true,
+    "detail": "{\"zoneVisible\":true,\"zoneRect\":{\"x\":20,\"y\":708,\"w\":112,\"h\":112},\"scurryRect\":{\"x\":304,\"y\":754,\"w\":66,\"h\":66},\"vw\":390,\"vh\":844}"
+  },
+  {
+    "name": "mobile: touch controls sit fully on screen",
+    "ok": true,
+    "detail": "{\"zoneVisible\":true,\"zoneRect\":{\"x\":20,\"y\":708,\"w\":112,\"h\":112},\"scurryRect\":{\"x\":304,\"y\":754,\"w\":66,\"h\":66},\"vw\":390,\"vh\":844}"
+  },
+  {
+    "name": "mobile: all 42 rendered modaks sit on their authoritative XZ",
+    "ok": true,
+    "detail": "{\"count\":42,\"mismatched\":0,\"sample\":[],\"sunk\":0}"
+  },
+  {
+    "name": "mobile: no modak floats above ground",
+    "ok": true,
+    "detail": "sunk=0"
+  },
+  {
+    "name": "mobile: six pickups each increment the basket exactly once",
+    "ok": true,
+    "detail": "[{\"id\":0,\"before\":0,\"after\":1,\"visible\":true},{\"id\":1,\"before\":1,\"after\":2,\"visible\":true},{\"id\":2,\"before\":2,\"after\":3,\"visible\":true},{\"id\":12,\"before\":3,\"after\":4,\"visible\":true},{\"id\":13,\"before\":4,\"after\":5,\"visible\":true},{\"id\":3,\"before\":5,\"after\":6,\"visible\":true}]"
+  },
+  {
+    "name": "mobile: full basket blocks pickup without consuming the item",
+    "ok": true,
+    "detail": "{\"basket\":6,\"id10Active\":true}"
+  },
+  {
+    "name": "mobile: basket-full cue is shown and worded correctly",
+    "ok": true,
+    "detail": "➤ Basket full — return to the pandal"
+  },
+  {
+    "name": "mobile: pickup registers during maximum-speed scurry",
+    "ok": true,
+    "detail": "{\"bursts\":1,\"peakSpeed\":8.5,\"basket\":1,\"pos\":{\"x\":-0.04,\"z\":4.3}}"
+  },
+  {
+    "name": "mobile: entering the pad unloads the whole basket exactly once",
+    "ok": true,
+    "detail": "{\"onEnter\":{\"basket\":0,\"delivered\":3,\"points\":30,\"bonuses\":0},\"lingered\":{\"basket\":0,\"delivered\":3,\"points\":30,\"bonuses\":0}}"
+  },
+  {
+    "name": "mobile: score matches delivered x10 + fullBasketBonus x30",
+    "ok": true,
+    "detail": "points=30 expected=30 (delivered 3, bonuses 0)"
+  },
+  {
+    "name": "mobile: lingering in the pad cannot double-score",
+    "ok": true,
+    "detail": "30 -> 30"
+  },
+  {
+    "name": "mobile: collecting is possible again immediately after delivery",
+    "ok": true,
+    "detail": "{\"before\":0,\"after\":3}"
+  },
+  {
+    "name": "mobile: pause halts the timer and movement, resume restores play",
+    "ok": true,
+    "detail": "{\"pausedPhase\":\"paused\",\"timeDriftWhilePaused\":0,\"movedWhilePaused\":0,\"resumedPhase\":\"playing\"}"
+  },
+  {
+    "name": "mobile: pause overlay appears only while paused",
+    "ok": true,
+    "detail": "false -> true"
+  },
+  {
+    "name": "mobile: restart resets basket, deliveries, score, timer and all 42 pickups",
+    "ok": true,
+    "detail": "{\"from\":2,\"to\":3,\"basket\":0,\"active\":42,\"time\":59.750000000000014}"
+  },
+  {
+    "name": "mobile: every modak is on the ground again after restart",
+    "ok": true,
+    "detail": "hidden=0"
+  },
+  {
+    "name": "mobile: collecting works again after a restart without a refresh",
+    "ok": true,
+    "detail": "basket=1"
+  },
+  {
+    "name": "mobile: the round ends on the timer and produces a summary",
+    "ok": true,
+    "detail": "{\"deliveredCount\":0,\"pointsScore\":0,\"fullBasketBonuses\":0,\"rushOrdersCompleted\":0,\"rushOrdersIssued\":0,\"basketRemainingAtEnd\":1}"
+  },
+  {
+    "name": "mobile: results screen is shown with delivered total and local best",
+    "ok": true,
+    "detail": "{\"pts\":\"0\",\"del\":\"0 × 10 = 0 pts\",\"best\":\"0 pts\"}"
+  },
+  {
+    "name": "mobile: Play again starts a fresh round from the results screen",
+    "ok": true,
+    "detail": "{\"phase\":\"playing\",\"time\":59.783333333333346}"
+  },
+  {
+    "name": "mobile: nothing overflows the viewport (no page scroll)",
+    "ok": true,
+    "detail": "{\"sw\":390,\"cw\":390,\"sh\":844,\"ch\":844,\"bodyOverflow\":\"hidden\"}"
+  },
+  {
+    "name": "mobile: no console errors during the run",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "mobile: no uncaught page exceptions",
+    "ok": true,
+    "detail": ""
+  }
+]

@@ -2,6 +2,9 @@ import { defineConfig } from 'vite';
 import wasm from 'vite-plugin-wasm';
 
 export default defineConfig({
+  // Relative asset URLs so the static build works both at a domain root and
+  // under a subpath (e.g. user.github.io/modak-run/).
+  base: './',
   plugins: [
     wasm(),
   ],

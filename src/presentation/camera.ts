@@ -6,21 +6,34 @@ export interface CameraSystem {
   renderer: THREE.WebGLRenderer;
   update: (playerX: number, playerZ: number) => void;
   getMovementBasis: () => { forward: THREE.Vector3; right: THREE.Vector3 };
+  projectToScreen: (x: number, z: number) => { x: number; y: number };
+  setQuality: (level: 'high' | 'low') => void;
   render: () => void;
   dispose: () => void;
 }
 
+/**
+ * Pick a starting quality tier from the device. Small-screen and low-memory
+ * devices get no shadow map and a capped pixel ratio.
+ */
+function detectQuality(): 'high' | 'low' {
+  const nav = navigator as Navigator & { deviceMemory?: number };
+  const smallScreen = Math.min(window.innerWidth, window.innerHeight) < 480;
+  const lowMemory = typeof nav.deviceMemory === 'number' && nav.deviceMemory <= 4;
+  return smallScreen || lowMemory ? 'low' : 'high';
+}
+
 export function createCameraSystem(container: HTMLElement): CameraSystem {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x281e3a);
 
-  const aspect = window.innerWidth / window.innerHeight;
-  // Elevated 3/4 perspective matching the approved visual specification
-  const camera = new THREE.PerspectiveCamera(44, aspect, 0.1, 200);
+  const width = () => container.clientWidth || window.innerWidth;
+  const height = () => container.clientHeight || window.innerHeight;
 
-  // Balanced camera framing: stall on left, shrine on right, central plaza in focus
-  const baseCamPos = new THREE.Vector3(0.5, 7.6, 13.8);
-  const baseLookAt = new THREE.Vector3(0.3, 1.0, -0.2);
+  // Stable elevated three-quarter view. Pulled back and raised so Mushak, the
+  // route ahead and the pandal share the frame.
+  const camera = new THREE.PerspectiveCamera(42, width() / height(), 0.5, 220);
+  const baseCamPos = new THREE.Vector3(1.2, 12.4, 17.6);
+  const baseLookAt = new THREE.Vector3(0.6, 0.6, -1.6);
   camera.position.copy(baseCamPos);
   camera.lookAt(baseLookAt);
 
@@ -28,175 +41,108 @@ export function createCameraSystem(container: HTMLElement): CameraSystem {
     antialias: true,
     powerPreference: 'high-performance',
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0));
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFShadowMap;
+  renderer.setSize(width(), height());
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.25;
+  renderer.toneMappingExposure = 1.18;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+  // A small procedural dusk environment. Without it, metalness on the brass and
+  // gold surfaces has nothing to reflect and they render as flat black holes.
+  const envCanvas = document.createElement('canvas');
+  envCanvas.width = 32;
+  envCanvas.height = 64;
+  const envCtx = envCanvas.getContext('2d')!;
+  const envGrad = envCtx.createLinearGradient(0, 0, 0, 64);
+  envGrad.addColorStop(0.0, '#241d45');
+  envGrad.addColorStop(0.42, '#6b3d4a');
+  envGrad.addColorStop(0.52, '#e09a54');
+  envGrad.addColorStop(0.62, '#7a5340');
+  envGrad.addColorStop(1.0, '#2a2226');
+  envCtx.fillStyle = envGrad;
+  envCtx.fillRect(0, 0, 32, 64);
+  const envTex = new THREE.CanvasTexture(envCanvas);
+  envTex.mapping = THREE.EquirectangularReflectionMapping;
+  envTex.colorSpace = THREE.SRGBColorSpace;
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const envRT = pmrem.fromEquirectangular(envTex);
+  scene.environment = envRT.texture;
+  scene.environmentIntensity = 0.55;
+  envTex.dispose();
+  pmrem.dispose();
 
   // Insert canvas as first child under container
   container.insertBefore(renderer.domElement, container.firstChild);
 
-  // ---------------------------------------------------------------------------
-  // SCENIC SUNSET TWILIGHT BACKDROP & RIVER
-  // ---------------------------------------------------------------------------
-  // 1. Panoramic Sunset Sky Backdrop Mesh
-  const skyCanvas = document.createElement('canvas');
-  skyCanvas.width = 1024;
-  skyCanvas.height = 512;
-  const ctx = skyCanvas.getContext('2d')!;
+  let quality: 'high' | 'low' = detectQuality();
 
-  const skyGrad = ctx.createLinearGradient(0, 0, 0, 512);
-  skyGrad.addColorStop(0.0, '#1a1836'); // Zenith deep indigo
-  skyGrad.addColorStop(0.25, '#2e2048'); // Twilight violet
-  skyGrad.addColorStop(0.50, '#5f2f53'); // Dusk magenta
-  skyGrad.addColorStop(0.70, '#a85044'); // Sunset terracotta orange
-  skyGrad.addColorStop(0.86, '#d97b3a'); // Warm amber horizon
-  skyGrad.addColorStop(1.0, '#f5ba63');  // Golden glow
-  ctx.fillStyle = skyGrad;
-  ctx.fillRect(0, 0, 1024, 512);
-
-  // Distant glowing evening stars
-  ctx.fillStyle = 'rgba(255, 255, 235, 0.8)';
-  for (let s = 0; s < 50; s++) {
-    const sx = Math.random() * 1024;
-    const sy = Math.random() * 220;
-    const sr = Math.random() * 1.5 + 0.5;
-    ctx.beginPath();
-    ctx.arc(sx, sy, sr, 0, Math.PI * 2);
-    ctx.fill();
+  function applyQuality(next: 'high' | 'low') {
+    quality = next;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, next === 'high' ? 2 : 1.25));
+    renderer.shadowMap.enabled = next === 'high';
+    renderer.shadowMap.needsUpdate = true;
+    keyLight.castShadow = next === 'high';
   }
 
-  const skyTex = new THREE.CanvasTexture(skyCanvas);
-  skyTex.colorSpace = THREE.SRGBColorSpace;
-
-  // Large flat panoramic backdrop spanning the entire rear horizon
-  const skyBackdropGeo = new THREE.PlaneGeometry(160, 80);
-  const skyBackdropMat = new THREE.MeshBasicMaterial({
-    map: skyTex,
-    depthWrite: false,
-  });
-  const skyBackdrop = new THREE.Mesh(skyBackdropGeo, skyBackdropMat);
-  skyBackdrop.position.set(0, 24, -36);
-  scene.add(skyBackdrop);
-
-  // 2. Reflective River Plane along the back horizon
-  const riverGeo = new THREE.PlaneGeometry(120, 35);
-  const riverMat = new THREE.MeshStandardMaterial({
-    color: 0x1c2b44,
-    roughness: 0.18,
-    metalness: 0.82,
-  });
-  const river = new THREE.Mesh(riverGeo, riverMat);
-  river.rotation.x = -Math.PI / 2;
-  river.position.set(0, -1.0, -22);
-  scene.add(river);
-
-  // 3. Distant Ancient Mandir Temple Silhouettes across the river
-  const templeGroup = new THREE.Group();
-  templeGroup.position.set(0, -0.8, -26);
-
-  const matTemple = new THREE.MeshBasicMaterial({ color: 0x221832 });
-  const matWindowDiya = new THREE.MeshBasicMaterial({ color: 0xffb73b });
-
-  const templeDefs = [
-    { x: -28, w: 5.5, h: 7.5, spireH: 4.8 },
-    { x: -19, w: 4.5, h: 6.0, spireH: 4.0 },
-    { x: -11, w: 3.8, h: 8.5, spireH: 5.2 },
-    { x: -3,  w: 4.8, h: 6.5, spireH: 4.5 },
-    { x: 5,   w: 4.0, h: 8.0, spireH: 5.0 },
-    { x: 14,  w: 4.8, h: 6.2, spireH: 4.2 },
-    { x: 23,  w: 5.5, h: 9.0, spireH: 5.8 },
-  ];
-
-  templeDefs.forEach((t) => {
-    // Mandir sanctum body
-    const body = new THREE.Mesh(new THREE.BoxGeometry(t.w, t.h, 2.5), matTemple);
-    body.position.set(t.x, t.h / 2, 0);
-    templeGroup.add(body);
-
-    // Carved Shikhara tower spire
-    const spire = new THREE.Mesh(new THREE.ConeGeometry(t.w * 0.55, t.spireH, 4), matTemple);
-    spire.position.set(t.x, t.h + t.spireH / 2, 0);
-    spire.rotation.y = Math.PI / 4;
-    templeGroup.add(spire);
-
-    // Kalash pinnacle
-    const kalash = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 8), matTemple);
-    kalash.position.set(t.x, t.h + t.spireH + 0.35, 0);
-    templeGroup.add(kalash);
-
-    // Twinkling Diya window
-    const win = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 0.8), matWindowDiya);
-    win.position.set(t.x, t.h * 0.65, 1.3);
-    templeGroup.add(win);
-  });
-  scene.add(templeGroup);
-
   // ---------------------------------------------------------------------------
-  // GOLDEN HOUR SUNSET LIGHTING & ATMOSPHERE
+  // GOLDEN HOUR LIGHTING
+  // One shadow-casting key light plus soft fill. Lamp glow is carried by
+  // emissive materials in the diorama, not by a light per lamp.
   // ---------------------------------------------------------------------------
-  // 1. Soft ambient illumination
-  const ambientLight = new THREE.AmbientLight(0xffe2c4, 0.65);
+  const ambientLight = new THREE.AmbientLight(0xffe0bd, 0.5);
   scene.add(ambientLight);
 
-  // 2. Hemisphere light: cool twilight sky against warm sandstone ground
-  const hemiLight = new THREE.HemisphereLight(0x7387b3, 0x5a3b26, 0.75);
+  // Cool twilight sky bounce against warm sandstone ground.
+  const hemiLight = new THREE.HemisphereLight(0x6f7fb0, 0x6a4530, 0.85);
   scene.add(hemiLight);
 
-  // 3. Warm golden sunset directional key light casting long soft shadows
-  const keyLight = new THREE.DirectionalLight(0xffcb85, 1.95);
-  keyLight.position.set(10, 16, 12);
-  keyLight.castShadow = true;
+  // Warm low sun: long soft shadows from the right-rear.
+  const keyLight = new THREE.DirectionalLight(0xffc178, 2.1);
+  keyLight.position.set(16, 15, 9);
   keyLight.shadow.mapSize.width = 2048;
   keyLight.shadow.mapSize.height = 2048;
   keyLight.shadow.camera.near = 1.0;
-  keyLight.shadow.camera.far = 45;
-  keyLight.shadow.bias = -0.0004;
+  keyLight.shadow.camera.far = 60;
+  keyLight.shadow.bias = -0.0006;
+  keyLight.shadow.normalBias = 0.02;
 
-  const d = 16;
+  const d = 17;
   keyLight.shadow.camera.left = -d;
   keyLight.shadow.camera.right = d;
   keyLight.shadow.camera.top = d;
   keyLight.shadow.camera.bottom = -d;
+  keyLight.target.position.set(0, 0, -1);
   scene.add(keyLight);
+  scene.add(keyLight.target);
 
-  // 4. Subtle cool rim light from the left horizon
-  const rimLight = new THREE.DirectionalLight(0xc9825b, 0.8);
-  rimLight.position.set(-14, 10, -8);
+  // Cool bounce from the dusk side, keeps the left of frame from going flat.
+  const rimLight = new THREE.DirectionalLight(0x9a7fb8, 0.5);
+  rimLight.position.set(-16, 9, -6);
   scene.add(rimLight);
 
+  applyQuality(quality);
+
   function update(playerX: number, playerZ: number) {
-    const isPortrait = window.innerHeight > window.innerWidth;
-    const currentAspect = window.innerWidth / window.innerHeight;
-    camera.aspect = currentAspect;
-    camera.fov = isPortrait ? 52 : 44;
+    const portrait = height() > width();
+    camera.aspect = width() / height();
+    // Widen on portrait so the same courtyard reads without page scrolling.
+    camera.fov = portrait ? 58 : 42;
     camera.updateProjectionMatrix();
 
-    if (isPortrait) {
-      // Follow player dynamically on portrait mobile screens
-      const targetX = playerX * 0.55 + 0.2;
-      const targetZ = playerZ * 0.5 - 0.5;
-      camera.position.set(
-        targetX + baseCamPos.x * 0.75,
-        baseCamPos.y * 1.15,
-        targetZ + baseCamPos.z * 0.95
-      );
-      camera.lookAt(targetX, 0.8, targetZ - 1.0);
+    if (portrait) {
+      // Sit lower and closer so the courtyard fills the tall frame instead of
+      // leaving a broad band of empty distance above the play area.
+      const tx = playerX * 0.5;
+      const tz = playerZ * 0.45 - 1.6;
+      camera.position.set(tx + 0.6, 11.6, tz + 14.2);
+      camera.lookAt(tx + 0.2, 0.9, tz - 3.0);
     } else {
-      // Dynamic tracking on landscape desktop so player is always in frame
-      const targetX = baseLookAt.x + playerX * 0.35;
-      const targetZ = baseLookAt.z + playerZ * 0.35;
-      camera.position.set(
-        baseCamPos.x + playerX * 0.35,
-        baseCamPos.y,
-        baseCamPos.z + playerZ * 0.28
-      );
-      camera.lookAt(targetX, baseLookAt.y, targetZ);
+      const tx = baseLookAt.x + playerX * 0.26;
+      const tz = baseLookAt.z + playerZ * 0.24;
+      camera.position.set(baseCamPos.x + playerX * 0.26, baseCamPos.y, baseCamPos.z + playerZ * 0.2);
+      camera.lookAt(tx, baseLookAt.y, tz);
     }
   }
+
 
   // Camera-relative movement basis: Screen Up = Courtyard Forward (into screen)
   function getMovementBasis() {
@@ -211,13 +157,24 @@ export function createCameraSystem(container: HTMLElement): CameraSystem {
     return { forward, right };
   }
 
+  // Ground-plane point -> CSS pixel position, for HUD directional cues.
+  const projVec = new THREE.Vector3();
+  function projectToScreen(x: number, z: number) {
+    camera.updateMatrixWorld();
+    projVec.set(x, 0, z).project(camera);
+    return {
+      x: ((projVec.x + 1) / 2) * renderer.domElement.clientWidth,
+      y: ((1 - projVec.y) / 2) * renderer.domElement.clientHeight,
+    };
+  }
+
   function onResize() {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0));
-    update(0, 0);
+    renderer.setSize(width(), height());
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, quality === 'high' ? 2 : 1.25));
   }
 
   window.addEventListener('resize', onResize);
+  window.addEventListener('orientationchange', onResize);
 
   return {
     scene,
@@ -225,9 +182,13 @@ export function createCameraSystem(container: HTMLElement): CameraSystem {
     renderer,
     update,
     getMovementBasis,
+    projectToScreen,
+    setQuality: applyQuality,
     render: () => renderer.render(scene, camera),
     dispose: () => {
       window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+      envRT.texture.dispose();
       renderer.dispose();
       if (renderer.domElement && renderer.domElement.parentNode) {
         renderer.domElement.parentNode.removeChild(renderer.domElement);

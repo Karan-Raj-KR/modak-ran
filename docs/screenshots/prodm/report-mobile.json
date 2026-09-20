@@ -1,0 +1,137 @@
+{
+  "results": [
+    {
+      "name": "prod: dev-only automation and debug overlay are absent",
+      "ok": true,
+      "detail": "{\"modak\":\"undefined\",\"visual\":\"undefined\",\"debugLabel\":false}"
+    },
+    {
+      "name": "prod: starts on the start screen with a full 60s timer",
+      "ok": true,
+      "detail": "{\"timer\":\"01:00\",\"delivered\":0,\"basket\":0,\"points\":0,\"cue\":false,\"start\":true,\"pause\":false,\"results\":false,\"resultsPoints\":\"0\",\"resultsDelivered\":\"0 × 10 = 0 pts\",\"resultsBest\":\"0 pts\",\"soundLabel\":\"Sound on — tap to mute\"}"
+    },
+    {
+      "name": "prod: labels Time / Delivered / Basket / Points are all present",
+      "ok": true,
+      "detail": "{\"timer\":\"01:00\",\"delivered\":0,\"basket\":0,\"points\":0,\"cue\":false,\"start\":true,\"pause\":false,\"results\":false,\"resultsPoints\":\"0\",\"resultsDelivered\":\"0 × 10 = 0 pts\",\"resultsBest\":\"0 pts\",\"soundLabel\":\"Sound on — tap to mute\"}"
+    },
+    {
+      "name": "prod: a real mouse click on Play starts the round",
+      "ok": true,
+      "detail": "{\"timer\":\"01:00\",\"delivered\":0,\"basket\":0,\"points\":0,\"cue\":false,\"start\":false,\"pause\":false,\"results\":false,\"resultsPoints\":\"0\",\"resultsDelivered\":\"0 × 10 = 0 pts\",\"resultsBest\":\"0 pts\",\"soundLabel\":\"Sound on — tap to mute\"}"
+    },
+    {
+      "name": "prod: in-game HUD controls are hit-testable (nothing covers them)",
+      "ok": true,
+      "detail": "{\"#hud-btn-pause\":true,\"#hud-btn-sound\":true,\"#btn-scurry-control\":true}"
+    },
+    {
+      "name": "prod(mobile): thumbstick is shown on a touch device",
+      "ok": true,
+      "detail": "{\"shown\":true}"
+    },
+    {
+      "name": "prod(mobile): thumbstick and scurry button sit fully on screen",
+      "ok": true,
+      "detail": "{\"base\":{\"cx\":76,\"cy\":764,\"w\":112,\"h\":112},\"btn\":{\"cx\":337,\"cy\":787,\"w\":66,\"h\":66},\"vh\":844,\"vw\":390}"
+    },
+    {
+      "name": "prod(mobile): dragging the thumbstick collects modaks",
+      "ok": true,
+      "detail": "basket=6"
+    },
+    {
+      "name": "prod: the basket fills to exactly 6 and no further",
+      "ok": true,
+      "detail": "basket=6"
+    },
+    {
+      "name": "prod: basket-full cue appears once the basket is at capacity",
+      "ok": true,
+      "detail": "basket=6 cue=true"
+    },
+    {
+      "name": "prod: the basket-full cue points at the pad and entering it unloads and scores",
+      "ok": true,
+      "detail": "{\"timer\":\"00:52\",\"delivered\":6,\"basket\":0,\"points\":90,\"cue\":false,\"start\":false,\"pause\":false,\"results\":false,\"resultsPoints\":\"0\",\"resultsDelivered\":\"0 × 10 = 0 pts\",\"resultsBest\":\"0 pts\",\"soundLabel\":\"Sound on — tap to mute\"}"
+    },
+    {
+      "name": "prod: points equal delivered x10 plus full-basket bonuses",
+      "ok": true,
+      "detail": "points=90 expected=90 delivered=6"
+    },
+    {
+      "name": "prod: the pause button pauses and shows the pause screen",
+      "ok": true,
+      "detail": "{\"pause\":true,\"timer\":\"00:51\"}"
+    },
+    {
+      "name": "prod: the clock is held while paused",
+      "ok": true,
+      "detail": "00:51 vs 00:51"
+    },
+    {
+      "name": "prod: Resume returns to play",
+      "ok": true,
+      "detail": "{\"p\":false,\"r\":false}"
+    },
+    {
+      "name": "prod: sound button exposes its state in the label",
+      "ok": true,
+      "detail": "Sound off — tap to enable"
+    },
+    {
+      "name": "prod: the round finishes on the timer and shows results",
+      "ok": true,
+      "detail": "{\"results\":true,\"points\":90,\"delivered\":6,\"basket\":0}"
+    },
+    {
+      "name": "prod: Play again resets basket, deliveries and the 60s clock",
+      "ok": true,
+      "detail": "{\"timer\":\"01:00\",\"delivered\":0,\"basket\":0,\"points\":0,\"cue\":false,\"start\":false,\"pause\":false,\"results\":false,\"resultsPoints\":\"90\",\"resultsDelivered\":\"6 × 10 = 60 pts\",\"resultsBest\":\"90 pts\",\"soundLabel\":\"Sound on — tap to mute\"}"
+    },
+    {
+      "name": "prod: collecting works again after restart without a page reload",
+      "ok": true,
+      "detail": "basket=1"
+    },
+    {
+      "name": "prod: the Rapier WASM file is fetched by the page",
+      "ok": true,
+      "detail": "[\"http://localhost:4173/assets/rapier_wasm3d_bg-CCK6hj8V.wasm\"]"
+    },
+    {
+      "name": "prod: JS and CSS bundles load",
+      "ok": true,
+      "detail": "1 js, 1 css"
+    },
+    {
+      "name": "prod: a WebGL canvas is present",
+      "ok": true,
+      "detail": "ok"
+    },
+    {
+      "name": "prod: no page scrolling",
+      "ok": true,
+      "detail": "{\"sw\":390,\"cw\":390,\"sh\":844,\"ch\":844}"
+    },
+    {
+      "name": "prod: no failed or 4xx/5xx network responses",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "prod: no console errors across a full round",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "prod: no uncaught exceptions across a full round",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "badResponses": [],
+  "consoleErrors": [],
+  "pageErrors": []
+}

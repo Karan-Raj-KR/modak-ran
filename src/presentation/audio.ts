@@ -127,6 +127,28 @@ export class PresentationAudio {
     noise.stop(now + 0.26);
   }
 
+  /** Two descending notes: the basket is full, go and unload. */
+  public playBasketFull() {
+    if (this.muted) return;
+    this.init();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    [698.46, 523.25].forEach((freq, i) => {
+      const osc = this.ctx!.createOscillator();
+      const gain = this.ctx!.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now + i * 0.13);
+      gain.gain.setValueAtTime(0.0001, now + i * 0.13);
+      gain.gain.linearRampToValueAtTime(0.11, now + i * 0.13 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0005, now + i * 0.13 + 0.3);
+      osc.connect(gain);
+      gain.connect(this.ctx!.destination);
+      osc.start(now + i * 0.13);
+      osc.stop(now + i * 0.13 + 0.32);
+    });
+  }
+
   public playRoundEnd() {
     if (this.muted) return;
     this.init();

@@ -1,13 +1,8 @@
 /**
  * GameSnapshot — read-only state snapshot emitted by simulation each frame.
- *
- * PRESENTATION: Read this data to render the scene. Do NOT mutate any snapshot.
- * All positions are world Y-up coordinates.
- * Player position is feet origin (Y ≈ 0 when grounded).
- * Heading is yaw rotation in radians (0 = +Z, CCW positive).
  */
 
-import type { Vec3 } from './level';
+import type { Vec3, RegionId } from './level';
 
 export type GamePhase = 'loading' | 'ready' | 'playing' | 'paused' | 'results';
 
@@ -18,76 +13,101 @@ export type MovementState =
   | 'scurry-cooldown';
 
 export interface PlayerSnapshot {
-  /** Feet position (ground contact point) */
   position: Vec3;
-  /** Yaw rotation in radians */
   heading: number;
-  /** Current velocity in world units/second */
   velocity: Vec3;
-  /** Whether the character controller is grounded */
   grounded: boolean;
-  /** Current movement state */
   movementState: MovementState;
 }
 
 export interface ScurrySnapshot {
-  /** Whether scurry burst is currently active */
   active: boolean;
-  /** Remaining scurry time in seconds (0 if not active) */
   remainingDuration: number;
-  /** Current cooldown remaining in seconds (0 when ready) */
   cooldownRemaining: number;
 }
 
 export interface CargoSnapshot {
-  /** Number of items currently carried */
   count: number;
-  /** Maximum capacity */
   capacity: number;
-  /** IDs of items in basket (max length = capacity) */
   itemIds: number[];
 }
 
-export interface GameSnapshot {
-  /** Current game phase */
-  phase: GamePhase;
-
-  /** Round timer: seconds remaining (counting down from 60) */
+export interface RushOrderSnapshot {
+  regionId: RegionId;
+  regionLabel: string;
+  /** Items collected from target region after order started and delivered */
+  progress: number;
+  /** Required deliveries */
+  required: number;
+  /** Time remaining in seconds */
   timeRemaining: number;
-  /** Elapsed simulation time this round */
+  /** Total duration in seconds */
+  totalDuration: number;
+}
+
+export interface RunSummary {
+  deliveredCount: number;
+  pointsScore: number;
+  fullBasketBonuses: number;
+  rushOrdersCompleted: number;
+  rushOrdersIssued: number;
+  basketRemainingAtEnd: number;
+}
+
+export interface GhostSample {
+  t: number;
+  x: number;
+  z: number;
+  heading: number;
+}
+
+export interface GameSnapshot {
+  phase: GamePhase;
+  timeRemaining: number;
   elapsedTime: number;
 
-  /** Number of modaks delivered */
+  /** Whether this is an unscored practice session */
+  isPractice: boolean;
+
+  /** Modaks delivered this round */
   deliveredCount: number;
-  /** Total collectibles in the level */
   totalCollectibles: number;
 
-  /** Current basket state */
+  /** Points score: 10pts/modak + 30pts full basket bonus */
+  pointsScore: number;
+  /** How many full-basket bonuses earned this round */
+  fullBasketBonuses: number;
+  /** Rush orders successfully completed */
+  rushOrdersCompleted: number;
+
   cargo: CargoSnapshot;
 
-  /** Personal best delivered count */
+  /** Personal best points score */
   personalBest: number;
-  /** Whether personal best was improved this round */
   pbImproved: boolean;
 
-  /** Player state */
   player: PlayerSnapshot;
-
-  /** Scurry state */
   scurry: ScurrySnapshot;
 
-  /** Active collectible IDs (not yet collected) */
   activeCollectibleIds: number[];
-
-  /** Current surface zone ID (null = normal ground) */
   currentSurface: string | null;
 
-  /** Whether audio is muted */
   muted: boolean;
-
-  /** Unique round identifier for event correlation */
   roundId: number;
 
-  /** Current score (alias for deliveredCount) */
+  /** Legacy alias: same as deliveredCount */
   score: number;
+
+  /** Active rush order, if any */
+  rushOrder: RushOrderSnapshot | null;
+
+  /** Ghost visible toggle */
+  ghostEnabled: boolean;
+
+  /** Ghost trajectory from personal best run (null if not available) */
+  ghostSamples: GhostSample[] | null;
+
+  /** Summary of last round for results screen */
+  lastRunSummary: RunSummary | null;
 }
+

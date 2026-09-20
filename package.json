@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "test": "tsx tests/rules.test.ts && tsx tests/map.test.ts && tsx tests/gameplay/mechanics.test.ts"
+    "test": "tsx tests/rules.test.ts && tsx tests/map.test.ts && tsx tests/gameplay/mechanics.test.ts && tsx tests/physics/collision.test.ts && tsx tests/gameplay/features.test.ts"
   },
   "dependencies": {
     "@dimforge/rapier3d": "^0.20.0",

@@ -6,7 +6,7 @@
 import { COURTYARD_LEVEL } from '../level/courtyard';
 import type { GameSnapshot } from './snapshot';
 import type { AnyGameEvent } from './events';
-import type { LevelDefinition, Vec3 } from './level';
+import type { LevelDefinition } from './level';
 
 export { COURTYARD_LEVEL };
 
@@ -15,8 +15,12 @@ export function makeMockSnapshot(overrides: Partial<GameSnapshot> = {}): GameSna
     phase: 'playing',
     timeRemaining: 60,
     elapsedTime: 0,
+    isPractice: false,
     deliveredCount: 0,
     totalCollectibles: 42,
+    pointsScore: 0,
+    fullBasketBonuses: 0,
+    rushOrdersCompleted: 0,
     cargo: { count: 0, capacity: 6, itemIds: [] },
     personalBest: 0,
     pbImproved: false,
@@ -33,6 +37,10 @@ export function makeMockSnapshot(overrides: Partial<GameSnapshot> = {}): GameSna
     muted: false,
     roundId: 1,
     score: 0,
+    rushOrder: null,
+    ghostEnabled: true,
+    ghostSamples: null,
+    lastRunSummary: null,
     ...overrides,
   };
 }
@@ -46,6 +54,7 @@ export function makeMockEvents(count: number = 0): AnyGameEvent[] {
     position: { x: 0, y: 0, z: 4 },
     itemId: i,
     basketCount: 1,
+    regionId: null,
   }));
 }
 

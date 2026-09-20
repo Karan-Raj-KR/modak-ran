@@ -42,8 +42,9 @@ function initApp() {
     const basis = presentation.getMovementBasis();
     (sim as any).setMovementBasis(basis);
 
-    // Mark as ready
-    sim.processCommand({ type: 'restart' });
+    // The simulation boots in the 'ready' phase: the courtyard is fully built
+    // and rendering, but the round timer only starts when Play is pressed.
+    presentation.render(sim.getSnapshot(), [], 0);
 
     // Start render loop
     lastTime = performance.now();
@@ -83,6 +84,24 @@ function initApp() {
 
     // Render
     presentation.render(latestSnapshot, newEvents, clampedDelta);
+  }
+
+  // ─── Dev-only automation handle ──────────────────────────────────────────
+  // Lets a scripted browser run drive the real command path and read the real
+  // authoritative state. Compiled out of production builds.
+  if (import.meta.env.DEV) {
+    (window as unknown as Record<string, unknown>).__modak = {
+      send: (command: GameCommand) => sim.processCommand(command),
+      snapshot: () => sim.getSnapshot(),
+      level: COURTYARD_LEVEL,
+      /** Dispatch a real keyboard event through the window listeners. */
+      key: (type: 'keydown' | 'keyup', code: string) => {
+        window.dispatchEvent(
+          new KeyboardEvent(type, { code, key: code, bubbles: true, cancelable: true })
+        );
+      },
+      click: (id: string) => (document.getElementById(id) as HTMLButtonElement | null)?.click(),
+    };
   }
 
   // ─── Visibility Handling ─────────────────────────────────────────────────

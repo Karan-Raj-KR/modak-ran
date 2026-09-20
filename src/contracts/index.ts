@@ -11,6 +11,8 @@ export type {
   DeliveryZone,
   PlayerDimensions,
   LevelDefinition,
+  RegionId,
+  RegionDefinition,
 } from './level';
 
 export type {
@@ -19,6 +21,9 @@ export type {
   PlayerSnapshot,
   ScurrySnapshot,
   CargoSnapshot,
+  RushOrderSnapshot,
+  RunSummary,
+  GhostSample,
   GameSnapshot,
 } from './snapshot';
 
@@ -32,18 +37,24 @@ export type {
   RoundEndedEvent,
   BasketFullEvent,
   SurfaceChangedEvent,
+  RushOrderStartedEvent,
+  RushOrderCompletedEvent,
+  RushOrderExpiredEvent,
+  FullBasketBonusEvent,
   AnyGameEvent,
 } from './events';
 
 export type {
   CommandType,
   StartCommand,
+  StartPracticeCommand,
   PauseCommand,
   ResumeCommand,
   RestartCommand,
   MoveCommand,
   ScurryCommand,
   SetMutedCommand,
+  ToggleGhostCommand,
   GameCommand,
 } from './commands';
 
@@ -54,3 +65,4 @@ export type {
 } from './presentation';
 
 export { createPresentation } from './presentation';
+

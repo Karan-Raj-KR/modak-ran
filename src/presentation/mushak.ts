@@ -1,14 +1,18 @@
 import * as THREE from 'three';
-import { createWickerTexture } from './textures';
+import { createWickerTexture, createSoftShadowTexture } from './textures';
 
 export interface MushakInstance {
   root: THREE.Group;
+  /**
+   * `speed` is the magnitude of the player's actual ground velocity, so the
+   * walk cycle only plays when Mushak really moves — not while pushing a wall.
+   */
   update: (
     delta: number,
-    isMoving: boolean,
-    isScurrying: boolean,
     speed: number,
-    moveAngle: number
+    heading: number,
+    scurrying: boolean,
+    reducedMotion?: boolean
   ) => void;
   setBasketCount: (count: number) => void;
   triggerDeliveryCheer: () => void;
@@ -98,19 +102,23 @@ export function createMushak(scene: THREE.Scene): MushakInstance {
   });
 
   // Contact blob shadow on ground
-  const shadowGeo = new THREE.PlaneGeometry(1.3, 1.7);
+  const shadowGeo = new THREE.PlaneGeometry(1.05, 1.25);
   const shadowMat = new THREE.MeshBasicMaterial({
-    color: 0x0a0f18,
+    map: createSoftShadowTexture(),
     transparent: true,
-    opacity: 0.52,
+    opacity: 0.6,
+    depthWrite: false,
   });
   const contactShadow = new THREE.Mesh(shadowGeo, shadowMat);
   contactShadow.rotation.x = -Math.PI / 2;
-  contactShadow.position.set(0, 0.012, 0);
+  contactShadow.position.set(0, 0.05, 0);
   root.add(contactShadow);
 
-  // Scaled Hero Character Group (~1.4x for clear, expressive visual impact)
+  // Scaled Hero Character Group (~1.4x for clear, expressive visual impact).
+  // Lifted so the hind feet, which sit below the body in local space, land on
+  // the courtyard floor when root sits at y=0.
   const characterGroup = new THREE.Group();
+  characterGroup.position.y = 0.28;
   characterGroup.scale.set(1.4, 1.4, 1.4);
   root.add(characterGroup);
 
@@ -326,16 +334,19 @@ export function createMushak(scene: THREE.Scene): MushakInstance {
   pawFR.position.set(0.18, 0.05, 0.24);
   bodyPivot.add(pawFR);
 
-  // Hind running feet
+  // Hind running feet. FOOT_Y is the resting height in characterGroup space;
+  // with the group lifted to 0.28 and scaled 1.4 this lands the feet on y≈0.04.
+  const FOOT_Y = -0.17;
+
   const pawHindGeo = new THREE.SphereGeometry(0.095, 10, 10);
   pawHindGeo.scale(0.85, 0.65, 1.35);
 
   const footL = new THREE.Mesh(pawHindGeo, matPaw);
-  footL.position.set(-0.16, -0.36, 0.02);
+  footL.position.set(-0.16, FOOT_Y, 0.02);
   characterGroup.add(footL);
 
   const footR = new THREE.Mesh(pawHindGeo, matPaw);
-  footR.position.set(0.16, -0.36, 0.02);
+  footR.position.set(0.16, FOOT_Y, 0.02);
   characterGroup.add(footR);
 
   // 7. Dust Puff Trail Particles
@@ -380,6 +391,7 @@ export function createMushak(scene: THREE.Scene): MushakInstance {
   // Animation State
   let walkPhase = 0;
   let cheerTimer = 0;
+  let clock = 0;
 
   scene.add(root);
 
@@ -387,26 +399,40 @@ export function createMushak(scene: THREE.Scene): MushakInstance {
     root,
     update: (
       delta: number,
-      isMoving: boolean,
-      isScurrying: boolean,
       speed: number,
-      moveAngle: number
+      heading: number,
+      isScurrying: boolean,
+      reducedMotion = false
     ) => {
-      // Smooth rotation toward movement direction
-      if (isMoving) {
-        let diff = moveAngle - root.rotation.y;
+      clock += delta;
+
+      // Driven by achieved ground speed, so Mushak stops animating when he is
+      // pressed against an obstacle instead of running in place.
+      const isMoving = speed > 0.45;
+      const speedFrac = Math.min(1, speed / 8.5);
+
+      if (isMoving && !reducedMotion) {
+        let diff = heading - root.rotation.y;
         while (diff < -Math.PI) diff += Math.PI * 2;
         while (diff > Math.PI) diff -= Math.PI * 2;
-        root.rotation.y += diff * Math.min(1.0, delta * 18);
+        root.rotation.y += diff * Math.min(1.0, delta * 16);
+      } else if (isMoving) {
+        root.rotation.y = heading;
+      }
 
-        walkPhase += delta * speed * 3.2;
+      // Stride frequency scales with real speed: a crawl steps slowly, a scurry
+      // blurs. Amplitude grows too, so the two never look identical.
+      if (isMoving) walkPhase += delta * (3.2 + speed * 2.5);
 
+      if (isMoving && !reducedMotion) {
         dustTimer += delta;
-        const dustRate = isScurrying ? 0.05 : 0.12;
+        const dustRate = isScurrying ? 0.045 : 0.13;
         if (dustTimer >= dustRate) {
           dustTimer = 0;
           spawnDust(root.position.x, 0, root.position.z);
         }
+      } else {
+        dustTimer = 0;
       }
 
       // Update dust particles
@@ -427,42 +453,50 @@ export function createMushak(scene: THREE.Scene): MushakInstance {
       });
 
       // Bipedal step cycles for hind feet
-      const stepAmp = isMoving ? 0.16 : 0;
+      const stepAmp = isMoving ? 0.1 + speedFrac * 0.1 : 0;
       const footFreq = walkPhase * 2.4;
 
-      footL.position.y = -0.36 + Math.max(0, Math.sin(footFreq)) * stepAmp;
-      footL.position.z = 0.02 + Math.cos(footFreq) * (stepAmp * 1.1);
+      footL.position.y = FOOT_Y + Math.max(0, Math.sin(footFreq)) * stepAmp;
+      footL.position.z = 0.02 + Math.cos(footFreq) * (stepAmp * 0.9);
 
-      footR.position.y = -0.36 + Math.max(0, Math.sin(footFreq + Math.PI)) * stepAmp;
-      footR.position.z = 0.02 + Math.cos(footFreq + Math.PI) * (stepAmp * 1.1);
+      footR.position.y = FOOT_Y + Math.max(0, Math.sin(footFreq + Math.PI)) * stepAmp;
+      footR.position.z = 0.02 + Math.cos(footFreq + Math.PI) * (stepAmp * 0.9);
 
       // Front paws pumping
-      pawFL.position.z = 0.24 + Math.cos(footFreq + Math.PI) * 0.06;
-      pawFR.position.z = 0.24 + Math.cos(footFreq) * 0.06;
+      pawFL.position.z = 0.24 + Math.cos(footFreq + Math.PI) * (stepAmp * 0.45);
+      pawFR.position.z = 0.24 + Math.cos(footFreq) * (stepAmp * 0.45);
 
       // Body vertical bobbing and forward running lean
       if (isMoving) {
-        bodyPivot.position.y = 0.42 + Math.abs(Math.sin(footFreq)) * 0.06;
-        bodyPivot.rotation.x = isScurrying ? 0.32 : 0.16;
-        tailMesh.rotation.y = Math.sin(walkPhase * 1.8) * 0.4;
-        scarfTailPivot.rotation.y = Math.sin(walkPhase * 2.0) * 0.5;
-        scarfTail.rotation.z = 0.2 + Math.sin(walkPhase * 2.2) * 0.3;
+        bodyPivot.position.y = 0.42 + Math.abs(Math.sin(footFreq)) * (0.03 + speedFrac * 0.05);
+        bodyPivot.rotation.x = THREE.MathUtils.lerp(
+          bodyPivot.rotation.x,
+          isScurrying ? 0.34 : 0.14 * speedFrac + 0.06,
+          Math.min(1, delta * 12)
+        );
+        // Tail and scarf react to motion only — the physics body is untouched.
+        tailMesh.rotation.y = Math.sin(walkPhase * 1.8) * (0.25 + speedFrac * 0.3);
+        scarfTailPivot.rotation.y = Math.sin(walkPhase * 2.0) * (0.3 + speedFrac * 0.3);
+        scarfTail.rotation.z = 0.2 + Math.sin(walkPhase * 2.2) * (0.2 + speedFrac * 0.25);
       } else {
         // Idle breathing and subtle ear twitch
-        bodyPivot.position.y = 0.42 + Math.sin(Date.now() * 0.003) * 0.015;
+        bodyPivot.position.y = 0.42 + Math.sin(clock * 1.9) * 0.015;
         bodyPivot.rotation.x = THREE.MathUtils.lerp(bodyPivot.rotation.x, 0, delta * 10);
-        tailMesh.rotation.y = Math.sin(Date.now() * 0.002) * 0.12;
-        earL.rotation.z = -0.2 + Math.sin(Date.now() * 0.005) * 0.03;
-        earR.rotation.z = 0.2 - Math.sin(Date.now() * 0.005) * 0.03;
+        tailMesh.rotation.y = Math.sin(clock * 0.9) * 0.12;
+        earL.rotation.z = -0.2 + Math.sin(clock * 1.7) * 0.03;
+        earR.rotation.z = 0.2 - Math.sin(clock * 1.7) * 0.03;
         scarfTailPivot.rotation.y = THREE.MathUtils.lerp(scarfTailPivot.rotation.y, 0, delta * 8);
       }
+
+      // Basket bobs gently with the stride, more when it is heavy.
+      basketGroup.position.y = 0.12 + (isMoving ? Math.sin(footFreq * 0.5) * 0.012 : 0);
 
       // Delivery celebration hop
       if (cheerTimer > 0) {
         cheerTimer -= delta;
         const jumpY = Math.sin(((0.45 - cheerTimer) / 0.45) * Math.PI) * 0.4;
         bodyPivot.position.y += jumpY;
-        root.rotation.y += delta * 14;
+        if (!reducedMotion) root.rotation.y += delta * 14;
       }
     },
 
@@ -477,12 +511,21 @@ export function createMushak(scene: THREE.Scene): MushakInstance {
     },
 
     reset: (x: number = 0, z: number = 6.0, rotation: number = -Math.PI) => {
-      root.position.set(x, 0.42, z);
+      root.position.set(x, 0, z);
       root.rotation.set(0, rotation, 0);
       bodyPivot.position.set(0, 0.42, 0);
       bodyPivot.rotation.set(0, 0, 0);
+      footL.position.set(-0.16, FOOT_Y, 0.02);
+      footR.position.set(0.16, FOOT_Y, 0.02);
+      pawFL.position.z = 0.24;
+      pawFR.position.z = 0.24;
       cheerTimer = 0;
       walkPhase = 0;
+      dustTimer = 0;
+      for (const p of dustPool) {
+        p.life = 0;
+        p.mesh.visible = false;
+      }
       for (let i = 0; i < 6; i++) {
         basketModaks[i].visible = false;
       }
