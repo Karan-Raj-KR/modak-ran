@@ -257,9 +257,27 @@ try {
   // lane modaks sit between x = -0.2 and x = 0.7, so a straight run can drift
   // past them; the waggle guarantees coverage. On mobile the thumbstick drag
   // above has already collected some, so this only tops the basket up.
-  for (let i = 0; i < 40 && (await hud()).basket < 6; i++) {
-    await hold('KeyW', 300);
-    await hold(i % 2 === 0 ? 'KeyD' : 'KeyA', 190);
+  // Budget the sweep in *simulation* seconds, read off the HUD clock, because
+  // headless software GL runs the round in slow motion; a fixed wall-clock
+  // number of key-holds would cover only a third of the courtyard here.
+  const simLeft = async () => {
+    const [mm, ss] = ((await hud()).timer ?? '0:0').split(':').map(Number);
+    return (mm || 0) * 60 + (ss || 0);
+  };
+  const sweepT0 = await simLeft();
+  const sweepWall0 = Date.now();
+  // Mow the field in rows. A short sideways waggle only ever covers the centre
+  // column, which leaves the modaks at x = ±1.5 behind and pins the basket at 5;
+  // lateral holds are long here so each row sweeps several columns.
+  let north = true;
+  for (let pass = 0; pass < 12; pass++) {
+    if ((await hud()).basket >= 6) break;
+    if (sweepT0 - (await simLeft()) > 34 || Date.now() - sweepWall0 > 300000) break;
+    await hold('KeyD', 1300);
+    await hold(north ? 'KeyW' : 'KeyS', 450);
+    await hold('KeyA', 2600);
+    await hold(north ? 'KeyW' : 'KeyS', 450);
+    north = !north;
   }
   const h = await hud();
   check('prod: the basket fills to exactly 6 and no further', h.basket === 6, `basket=${h.basket}`);
@@ -342,14 +360,17 @@ try {
   const ended = await evalIn(`(async () => {
     const t0 = performance.now();
     const num = (id) => parseInt(document.getElementById(id)?.textContent ?? '', 10);
-    while (performance.now() - t0 < 200000) {
+    // Headless software GL renders below the sim's 10 fps delta clamp, so the
+    // 60-second round drains slower than wall-clock here. The ceiling is sized
+    // for that; on real hardware this leg takes ~60s.
+    while (performance.now() - t0 < 420000) {
       const res = document.getElementById('overlay-results');
       if (res && !res.classList.contains('hidden')) {
-        return { results: true, points: num('val-points'), delivered: num('hud-delivered-val'), basket: num('hud-basket-val') };
+        return { results: true, points: num('val-points'), delivered: num('hud-delivered-val'), basket: num('hud-basket-val'), wallSeconds: +((performance.now() - t0) / 1000).toFixed(1) };
       }
       await new Promise(r => setTimeout(r, 500));
     }
-    return { results: false };
+    return { results: false, wallSeconds: +((performance.now() - t0) / 1000).toFixed(1) };
   })()`);
   check('prod: the round finishes on the timer and shows results', ended.results === true, JSON.stringify(ended));
   await shot('06-results');

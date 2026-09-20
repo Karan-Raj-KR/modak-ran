@@ -2,6 +2,9 @@ import * as THREE from 'three';
 import type { LevelDefinition } from '../contracts/level';
 import type { GameSnapshot } from '../contracts/snapshot';
 
+/** Mirrors CONFIG.PICKUP_RADIUS; duplicated so this dev-only module keeps depending on contracts alone. */
+const PICKUP_SENSOR_RADIUS = 0.95;
+
 export interface DebugOverlay {
   update: (snapshot: GameSnapshot) => void;
 }
@@ -72,7 +75,7 @@ export function createDebugOverlay(scene: THREE.Scene, level: LevelDefinition): 
 
   // Pickup sensor rings, one per collectible, toggled by authoritative state
   const sensors = level.collectibles.map((c) => {
-    const ring = circleEdges(c.position.x, c.position.z, 0.95, 0.02, matSensor);
+    const ring = circleEdges(c.position.x, c.position.z, PICKUP_SENSOR_RADIUS, 0.02, matSensor);
     group.add(ring);
     return { id: c.id, ring };
   });

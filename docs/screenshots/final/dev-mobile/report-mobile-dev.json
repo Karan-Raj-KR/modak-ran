@@ -27,7 +27,7 @@
   {
     "name": "mobile: round timer is running after Play",
     "ok": true,
-    "detail": "timeRemaining=59.70000000000002"
+    "detail": "timeRemaining=59.48333333333336"
   },
   {
     "name": "mobile: on-screen joystick is shown on a touch device",
@@ -50,14 +50,19 @@
     "detail": "sunk=0"
   },
   {
-    "name": "mobile: six pickups each increment the basket exactly once",
+    "name": "mobile: every modak walked into raises the basket, none lost or double-counted",
     "ok": true,
-    "detail": "[{\"id\":0,\"before\":0,\"after\":1,\"visible\":true},{\"id\":1,\"before\":1,\"after\":2,\"visible\":true},{\"id\":2,\"before\":2,\"after\":3,\"visible\":true},{\"id\":12,\"before\":3,\"after\":4,\"visible\":true},{\"id\":13,\"before\":4,\"after\":5,\"visible\":true},{\"id\":3,\"before\":5,\"after\":6,\"visible\":true}]"
+    "detail": "[{\"id\":0,\"before\":0,\"after\":1,\"full\":false,\"spent\":0.5},{\"id\":1,\"before\":1,\"after\":2,\"full\":false,\"spent\":0.52},{\"id\":2,\"before\":2,\"after\":3,\"full\":false,\"spent\":0.83},{\"id\":12,\"before\":3,\"after\":4,\"full\":false,\"spent\":1.12},{\"id\":13,\"before\":4,\"after\":5,\"full\":false,\"spent\":0.95},{\"id\":3,\"before\":5,\"after\":6,\"full\":false,\"spent\":1.37}]"
+  },
+  {
+    "name": "mobile: six collections fill the basket to its stated capacity",
+    "ok": true,
+    "detail": "basket=6/6"
   },
   {
     "name": "mobile: full basket blocks pickup without consuming the item",
     "ok": true,
-    "detail": "{\"basket\":6,\"id10Active\":true}"
+    "detail": "{\"basket\":6,\"capacity\":6,\"targetId\":4,\"dist\":0.24,\"insideSensor\":true,\"stillOnField\":true}"
   },
   {
     "name": "mobile: basket-full cue is shown and worded correctly",
@@ -67,7 +72,7 @@
   {
     "name": "mobile: pickup registers during maximum-speed scurry",
     "ok": true,
-    "detail": "{\"bursts\":1,\"peakSpeed\":8.5,\"basket\":1,\"pos\":{\"x\":-0.04,\"z\":4.3}}"
+    "detail": "{\"bursts\":1,\"peakSpeed\":8.49,\"basket\":1,\"pos\":{\"x\":-0.03,\"z\":4.9}}"
   },
   {
     "name": "mobile: entering the pad unloads the whole basket exactly once",
@@ -102,7 +107,7 @@
   {
     "name": "mobile: restart resets basket, deliveries, score, timer and all 42 pickups",
     "ok": true,
-    "detail": "{\"from\":2,\"to\":3,\"basket\":0,\"active\":42,\"time\":59.750000000000014}"
+    "detail": "{\"from\":3,\"to\":4,\"basket\":0,\"active\":42,\"time\":59.65000000000002}"
   },
   {
     "name": "mobile: every modak is on the ground again after restart",
@@ -127,7 +132,7 @@
   {
     "name": "mobile: Play again starts a fresh round from the results screen",
     "ok": true,
-    "detail": "{\"phase\":\"playing\",\"time\":59.783333333333346}"
+    "detail": "{\"phase\":\"playing\",\"time\":59.50000000000003}"
   },
   {
     "name": "mobile: nothing overflows the viewport (no page scroll)",

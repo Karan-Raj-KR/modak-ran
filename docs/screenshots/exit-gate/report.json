@@ -1,0 +1,55 @@
+{
+  "url": "http://localhost:5173/",
+  "results": [
+    {
+      "name": "gate: pressing Play starts a round with the full field and a running clock",
+      "ok": true,
+      "detail": "{\"phase\":\"playing\",\"time\":59.8,\"basket\":0,\"active\":42}"
+    },
+    {
+      "name": "gate: basket 1 fills to capacity and the pad unloads it exactly once",
+      "ok": true,
+      "detail": "{\"basket\":6,\"cueShown\":true,\"deliveredBefore\":6,\"deliveredAfter\":6,\"basketAfter\":0,\"points\":90,\"bonuses\":1,\"fieldLeft\":36,\"simUsed\":6,\"timeLeft\":53.2}"
+    },
+    {
+      "name": "gate: a second basket collects and delivers in the same round without a refresh",
+      "ok": true,
+      "detail": "{\"basket\":6,\"cueShown\":true,\"deliveredBefore\":12,\"deliveredAfter\":12,\"basketAfter\":0,\"points\":180,\"bonuses\":2,\"fieldLeft\":30,\"simUsed\":5.6,\"timeLeft\":46.8}"
+    },
+    {
+      "name": "gate: the HUD delivered counter tracks both deliveries",
+      "ok": true,
+      "detail": "{\"delivered\":\"12/42\"}"
+    },
+    {
+      "name": "gate: the round finishes on its own timer and produces a summary",
+      "ok": true,
+      "detail": "{\"deliveredCount\":12,\"pointsScore\":180,\"fullBasketBonuses\":2,\"rushOrdersCompleted\":0,\"rushOrdersIssued\":0,\"basketRemainingAtEnd\":0}"
+    },
+    {
+      "name": "gate: the result screen shows a self-consistent breakdown and a local best",
+      "ok": true,
+      "detail": "{\"visible\":true,\"points\":180,\"deliveredRow\":\"12 × 10 = 120 pts\",\"bonusRow\":\"2 × 30 = 60 pts\",\"bestRow\":\"180 pts\",\"playAgain\":true,\"rows\":{\"delivered\":12,\"perModak\":10,\"bonuses\":2,\"perBonus\":30,\"note\":\"(this device)\"}}"
+    },
+    {
+      "name": "gate: restart from the result screen restores every piece of state",
+      "ok": true,
+      "detail": "{\"phase\":\"playing\",\"basket\":0,\"delivered\":0,\"points\":0,\"field\":42,\"time\":59.7}"
+    },
+    {
+      "name": "gate: collecting works again after the restart, and the meshes agree",
+      "ok": true,
+      "detail": "{\"basket\":1,\"hiddenMeshes\":1}"
+    },
+    {
+      "name": "gate: no console errors across the whole session",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "gate: no uncaught exceptions across the whole session",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

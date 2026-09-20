@@ -27,7 +27,7 @@
   {
     "name": "desktop: round timer is running after Play",
     "ok": true,
-    "detail": "timeRemaining=59.900000000000006"
+    "detail": "timeRemaining=59.70000000000002"
   },
   {
     "name": "desktop: all 42 rendered modaks sit on their authoritative XZ",
@@ -40,14 +40,19 @@
     "detail": "sunk=0"
   },
   {
-    "name": "desktop: six pickups each increment the basket exactly once",
-    "ok": false,
-    "detail": "[{\"id\":0,\"before\":0,\"after\":1,\"visible\":true},{\"id\":1,\"before\":1,\"after\":2,\"visible\":true},{\"id\":2,\"before\":2,\"after\":3,\"visible\":true},{\"id\":12,\"before\":3,\"after\":4,\"visible\":true},{\"id\":13,\"before\":4,\"after\":5,\"visible\":true},{\"id\":3,\"before\":5,\"after\":5,\"visible\":false}]"
+    "name": "desktop: every modak walked into raises the basket, none lost or double-counted",
+    "ok": true,
+    "detail": "[{\"id\":0,\"before\":0,\"after\":1,\"full\":false,\"spent\":0.5},{\"id\":1,\"before\":1,\"after\":2,\"full\":false,\"spent\":0.5},{\"id\":2,\"before\":2,\"after\":3,\"full\":false,\"spent\":0.8},{\"id\":12,\"before\":3,\"after\":4,\"full\":false,\"spent\":0.9},{\"id\":13,\"before\":4,\"after\":5,\"full\":false,\"spent\":0.82},{\"id\":3,\"before\":5,\"after\":6,\"full\":false,\"spent\":1.3}]"
+  },
+  {
+    "name": "desktop: six collections fill the basket to its stated capacity",
+    "ok": true,
+    "detail": "basket=6/6"
   },
   {
     "name": "desktop: full basket blocks pickup without consuming the item",
-    "ok": false,
-    "detail": "{\"basket\":6,\"id10Active\":false}"
+    "ok": true,
+    "detail": "{\"basket\":6,\"capacity\":6,\"targetId\":4,\"dist\":0.29,\"insideSensor\":true,\"stillOnField\":true}"
   },
   {
     "name": "desktop: basket-full cue is shown and worded correctly",
@@ -57,7 +62,7 @@
   {
     "name": "desktop: pickup registers during maximum-speed scurry",
     "ok": true,
-    "detail": "{\"bursts\":1,\"peakSpeed\":8.5,\"basket\":1,\"pos\":{\"x\":-0.05,\"z\":4.37}}"
+    "detail": "{\"bursts\":1,\"peakSpeed\":8.49,\"basket\":1,\"pos\":{\"x\":-0.04,\"z\":4.82}}"
   },
   {
     "name": "desktop: entering the pad unloads the whole basket exactly once",
@@ -86,13 +91,13 @@
   },
   {
     "name": "desktop: pause overlay appears only while paused",
-    "ok": false,
-    "detail": "true -> true"
+    "ok": true,
+    "detail": "false -> true"
   },
   {
     "name": "desktop: restart resets basket, deliveries, score, timer and all 42 pickups",
     "ok": true,
-    "detail": "{\"from\":2,\"to\":3,\"basket\":0,\"active\":42,\"time\":59.900000000000006}"
+    "detail": "{\"from\":3,\"to\":4,\"basket\":0,\"active\":42,\"time\":59.70000000000002}"
   },
   {
     "name": "desktop: every modak is on the ground again after restart",
@@ -106,18 +111,18 @@
   },
   {
     "name": "desktop: the round ends on the timer and produces a summary",
-    "ok": false,
-    "detail": "{\"reached\":false,\"stillLeft\":13.700000000002387}"
+    "ok": true,
+    "detail": "{\"deliveredCount\":0,\"pointsScore\":0,\"fullBasketBonuses\":0,\"rushOrdersCompleted\":0,\"rushOrdersIssued\":0,\"basketRemainingAtEnd\":1}"
   },
   {
     "name": "desktop: results screen is shown with delivered total and local best",
-    "ok": false,
+    "ok": true,
     "detail": "{\"pts\":\"0\",\"del\":\"0 × 10 = 0 pts\",\"best\":\"0 pts\"}"
   },
   {
     "name": "desktop: Play again starts a fresh round from the results screen",
     "ok": true,
-    "detail": "{\"phase\":\"playing\",\"time\":59.80000000000001}"
+    "detail": "{\"phase\":\"playing\",\"time\":59.70000000000002}"
   },
   {
     "name": "desktop: nothing overflows the viewport (no page scroll)",

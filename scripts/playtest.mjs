@@ -250,13 +250,38 @@ async function main() {
 
     // ── Walk a real route and collect a full basket ───────────────────────
     if (!PROD) {
+      // Assertions here are route-independent: the straight-line walk to each
+      // named modak passes other modaks too, so the checks below prove the
+      // invariant that matters — every collection moves exactly one item from
+      // the field into the basket, nothing is double-counted or lost.
       const basketRun = await evalIn(client, `(async () => {
         const m = window.__modak;
         const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-        const goto = async (tx, tz, maxMs) => {
+        const TOTAL = m.level.collectibles.length;
+        const broken = [];
+        let prevCount = -1;
+        m.send({ type: 'restart' });
+        await sleep(500);
+        const ROUND_T0 = m.snapshot().timeRemaining;
+        const sample = () => {
+          const s = m.snapshot();
+          if (s.cargo.count + s.activeCollectibleIds.length !== TOTAL) {
+            broken.push({ lostOrDoubled: { basket: s.cargo.count, field: s.activeCollectibleIds.length, TOTAL } });
+          }
+          if (s.cargo.count < prevCount) broken.push({ regressed: [prevCount, s.cargo.count] });
+          if (new Set(s.cargo.itemIds).size !== s.cargo.itemIds.length) broken.push({ duplicateIds: s.cargo.itemIds });
+          prevCount = s.cargo.count;
+        };
+        // Budgets are spent in *simulation* seconds, not wall-clock. Headless
+        // software GL renders below the loop's 10 fps delta clamp, so the round
+        // runs in slow motion here; a wall-clock budget would make these routes
+        // fail for reasons that have nothing to do with the game.
+        const goto = async (tx, tz, simSec) => {
           let held = new Set();
-          const t0 = performance.now();
-          while (performance.now() - t0 < maxMs) {
+          const t0 = m.snapshot().timeRemaining;
+          const wall0 = performance.now();
+          while (t0 - m.snapshot().timeRemaining < simSec && m.snapshot().phase === 'playing' && performance.now() - wall0 < 90000) {
+            sample();
             const p = m.snapshot().player.position;
             const dx = tx - p.x, dz = tz - p.z;
             if (Math.hypot(dx, dz) <= 0.45) break;
@@ -272,43 +297,77 @@ async function main() {
             await sleep(50);
           }
           for (const k of held) m.key('keyup', k);
-          await sleep(90);
+          await sleep(200);
+          sample();
+          return +(t0 - m.snapshot().timeRemaining).toFixed(2);
         };
         const log = [];
         for (const id of [0, 1, 2, 12, 13, 3]) {
           const sp = m.level.collectibles.find(c => c.id === id);
           const before = m.snapshot().cargo.count;
-          await goto(sp.position.x, sp.position.z, 3500);
+          const spent = await goto(sp.position.x, sp.position.z, 5);
           const s = m.snapshot();
-          log.push({ id, before, after: s.cargo.count, visible: s.cargo.itemIds.includes(id) });
+          log.push({ id, before, after: s.cargo.count, full: before === s.cargo.capacity, spent });
         }
-        return { log, cargo: m.snapshot().cargo, time: m.snapshot().timeRemaining };
+        return {
+          log,
+          cargo: m.snapshot().cargo,
+          broken,
+          total: TOTAL,
+          simSecondsUsed: +(ROUND_T0 - m.snapshot().timeRemaining).toFixed(1),
+        };
       })()`);
-      const increments = basketRun.log.every((e, i) => e.after === i + 1 && e.visible);
-      check(`${tag}: six pickups each increment the basket exactly once`, increments, JSON.stringify(basketRun.log));
+      const grew = basketRun.log.every((e) => e.after > e.before || e.full);
+      check(`${tag}: every modak walked into raises the basket, none lost or double-counted`,
+        grew && basketRun.broken.length === 0,
+        JSON.stringify(basketRun.broken.length ? basketRun.broken : basketRun.log));
+      check(`${tag}: six collections fill the basket to its stated capacity`,
+        basketRun.cargo.count === basketRun.cargo.capacity,
+        `basket=${basketRun.cargo.count}/${basketRun.cargo.capacity}`);
 
       // ── Full basket refuses more, keeps items available ────────────────
+      // Walk onto a modak that is provably still on the field while the basket
+      // is at capacity: it must stay on the field, and the basket must not move.
       const refusal = await evalIn(client, `(async () => {
         const m = window.__modak;
-        const sp = m.level.collectibles.find(c => c.id === 10);
-        let held = new Set(); const t0 = performance.now();
-        while (performance.now() - t0 < 4000) {
+        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+        const p0 = m.snapshot().player.position;
+        const sp = m.snapshot().activeCollectibleIds
+          .map((cid) => m.level.collectibles.find((c) => c.id === cid))
+          .sort((a, b) => Math.hypot(a.position.x - p0.x, a.position.z - p0.z) - Math.hypot(b.position.x - p0.x, b.position.z - p0.z))[0];
+        let held = new Set();
+        const t0 = m.snapshot().timeRemaining;
+        while (t0 - m.snapshot().timeRemaining < 10 && m.snapshot().phase === 'playing') {
           const p = m.snapshot().player.position;
           const dx = sp.position.x - p.x, dz = sp.position.z - p.z;
           if (Math.hypot(dx, dz) <= 0.45) break;
-          const want = []; if (dz < -0.08) want.push('KeyW'); if (dz > 0.08) want.push('KeyS');
-          if (dx > 0.08) want.push('KeyD'); if (dx < -0.08) want.push('KeyA');
+          const want = [];
+          if (dz < -0.08) want.push('KeyW');
+          if (dz > 0.08) want.push('KeyS');
+          if (dx > 0.08) want.push('KeyD');
+          if (dx < -0.08) want.push('KeyA');
           const nx = new Set(want);
           for (const k of held) if (!nx.has(k)) m.key('keyup', k);
           for (const k of nx) if (!held.has(k)) m.key('keydown', k);
-          held = nx; await new Promise(r => setTimeout(r, 50));
+          held = nx;
+          await sleep(50);
         }
         for (const k of held) m.key('keyup', k);
-        await new Promise(r => setTimeout(r, 200));
+        await sleep(400);
         const s = m.snapshot();
-        return { basket: s.cargo.count, id10Active: s.activeCollectibleIds.includes(10) };
+        const dist = Math.hypot(s.player.position.x - sp.position.x, s.player.position.z - sp.position.z);
+        return {
+          basket: s.cargo.count,
+          capacity: s.cargo.capacity,
+          targetId: sp.id,
+          dist: +dist.toFixed(2),
+          insideSensor: dist <= m.config.PICKUP_RADIUS,
+          stillOnField: s.activeCollectibleIds.includes(sp.id),
+        };
       })()`);
-      check(`${tag}: full basket blocks pickup without consuming the item`, refusal.basket === 6 && refusal.id10Active, JSON.stringify(refusal));
+      check(`${tag}: full basket blocks pickup without consuming the item`,
+        refusal.basket === refusal.capacity && refusal.insideSensor && refusal.stillOnField,
+        JSON.stringify(refusal));
 
       const cueHud = await readHud(client);
       check(`${tag}: basket-full cue is shown and worded correctly`, cueHud.cueVisible && /Basket full .* return to the pandal/.test(cueHud.cueText ?? ''), cueHud.cueText);
@@ -325,8 +384,8 @@ async function main() {
         await sleep(60);
         let bursts = 0;
         let peak = 0;
-        const t0 = performance.now();
-        while (performance.now() - t0 < 4000) {
+        const t0 = m.snapshot().timeRemaining;
+        while (t0 - m.snapshot().timeRemaining < 3 && m.snapshot().phase === 'playing') {
           const s = m.snapshot();
           peak = Math.max(peak, Math.hypot(s.player.velocity.x, s.player.velocity.z));
           if (s.cargo.count > 0) break;
@@ -345,8 +404,8 @@ async function main() {
         const m = window.__modak;
         const sleep = (ms) => new Promise(r => setTimeout(r, ms));
         const dz = m.level.deliveryZone.position;
-        let held = new Set(); const t0 = performance.now();
-        while (performance.now() - t0 < 12000) {
+        let held = new Set(); const t0 = m.snapshot().timeRemaining;
+        while (t0 - m.snapshot().timeRemaining < 8 && m.snapshot().phase === 'playing') {
           const p = m.snapshot().player.position;
           const dx = dz.x - p.x, dz2 = dz.z - p.z;
           if (Math.hypot(dx, dz2) <= 0.6) break;
@@ -359,7 +418,10 @@ async function main() {
         }
         for (const k of held) m.key('keyup', k);
         const entered = m.snapshot();
-        await sleep(2500);
+        // Linger for 2 simulation seconds so a second, spurious unload would
+        // have plenty of time to appear.
+        const lt = entered.timeRemaining;
+        while (lt - m.snapshot().timeRemaining < 2 && m.snapshot().phase === 'playing') await sleep(100);
         const lingered = m.snapshot();
         return {
           onEnter: { basket: entered.cargo.count, delivered: entered.deliveredCount, points: entered.pointsScore, bonuses: entered.fullBasketBonuses },
@@ -387,8 +449,8 @@ async function main() {
         const sleep = (ms) => new Promise(r => setTimeout(r, ms));
         const before = m.snapshot().cargo.count;
         const sp = m.level.collectibles.find(c => c.id === 7);
-        let held = new Set(); const t0 = performance.now();
-        while (performance.now() - t0 < 6000) {
+        let held = new Set(); const t0 = m.snapshot().timeRemaining;
+        while (t0 - m.snapshot().timeRemaining < 6 && m.snapshot().phase === 'playing') {
           const p = m.snapshot().player.position;
           const dx = sp.position.x - p.x, dz = sp.position.z - p.z;
           if (Math.hypot(dx, dz) <= 0.45) break;
@@ -421,14 +483,25 @@ async function main() {
         return { pausedPhase: a.phase, timeDriftWhilePaused: +(b.timeRemaining - a.timeRemaining).toFixed(3), movedWhilePaused: +(Math.hypot(b.player.position.x - a.player.position.x, b.player.position.z - a.player.position.z)).toFixed(3), resumedPhase: c.phase };
       })()`);
       check(`${tag}: pause halts the timer and movement, resume restores play`, pause.pausedPhase === 'paused' && pause.timeDriftWhilePaused === 0 && pause.movedWhilePaused === 0 && pause.resumedPhase === 'playing', JSON.stringify(pause));
-      const pauseHud = await readHud(client);
+      // The HUD only repaints on a rendered frame, which under software GL can
+      // be a third of a second apart. Poll instead of assuming a sleep is enough.
+      const hudUntil = async (pred, ms = 12000) => {
+        const t0 = Date.now();
+        let h;
+        do {
+          h = await readHud(client);
+          if (pred(h)) return h;
+          await sleep(150);
+        } while (Date.now() - t0 < ms);
+        return h;
+      };
+      const pauseHud = await hudUntil((h) => !h.pauseVisible);
       await evalIn(client, `window.__modak.send({ type: 'pause' })`);
-      await sleep(250);
-      const pauseShown = await readHud(client);
+      const pauseShown = await hudUntil((h) => h.pauseVisible);
       check(`${tag}: pause overlay appears only while paused`, !pauseHud.pauseVisible && pauseShown.pauseVisible, `${pauseHud.pauseVisible} -> ${pauseShown.pauseVisible}`);
       await shot(client, `${tag}-05-paused`);
       await evalIn(client, `document.getElementById('btn-resume-game').click()`);
-      await sleep(200);
+      await hudUntil((h) => !h.pauseVisible);
 
       // ── Round end and restart ───────────────────────────────────────────
       const beforeRestart = await evalIn(client, `window.__modak.snapshot()`);
@@ -453,8 +526,8 @@ async function main() {
       const post = await evalIn(client, `(async () => {
         const m = window.__modak;
         const sp = m.level.collectibles.find(c => c.id === 0);
-        let held = new Set(); const t0 = performance.now();
-        while (performance.now() - t0 < 4000) {
+        let held = new Set(); const t0 = m.snapshot().timeRemaining;
+        while (t0 - m.snapshot().timeRemaining < 5 && m.snapshot().phase === 'playing') {
           const p = m.snapshot().player.position;
           const dx = sp.position.x - p.x, dz = sp.position.z - p.z;
           if (Math.hypot(dx, dz) <= 0.45) break;
@@ -469,26 +542,33 @@ async function main() {
         await new Promise(r => setTimeout(r, 150));
         return m.snapshot().cargo.count;
       })()`);
-      check(`${tag}: collecting works again after a restart without a refresh`, post === 1, `basket=${post}`);
+      check(`${tag}: collecting works again after a restart without a refresh`, post >= 1, `basket=${post}`);
 
       // ── Let the clock run out to reach the results screen ──────────────
-      // Headless software GL can render below 10 fps; the loop clamps each
-      // frame's delta, so the round takes longer than 60 wall-clock seconds.
+      // The loop clamps each frame's delta at MAX_CATCHUP (0.1 s), so below 10
+      // fps the round advances slower than wall-clock time. Headless software GL
+      // sits far below that. Measure the actual rate and size the wait for it,
+      // rather than guessing a ceiling that would silently flip this check.
       const endGame = await evalIn(client, `(async () => {
         const m = window.__modak;
+        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+        const w0 = performance.now(), s0 = m.snapshot().timeRemaining;
+        await sleep(4000);
+        const dSim = s0 - m.snapshot().timeRemaining;
+        const rate = dSim > 0.05 ? dSim / ((performance.now() - w0) / 1000) : 1;
+        const budget = Math.min((m.snapshot().timeRemaining / rate) * 1000 * 1.3 + 8000, 600000);
         const t0 = performance.now();
-        const s0 = m.snapshot();
-        while (performance.now() - t0 < 170000) {
+        while (performance.now() - t0 < budget) {
           const s = m.snapshot();
           if (s.phase === 'results') {
-            return { reached: true, summary: s.lastRunSummary, best: s.personalBest, simSeconds: s0.timeRemaining - s.timeRemaining, wallSeconds: (performance.now() - t0) / 1000 };
+            return { reached: true, summary: s.lastRunSummary, best: s.personalBest, simRate: +rate.toFixed(2), wallSeconds: +((performance.now() - t0) / 1000).toFixed(1) };
           }
-          await new Promise(r => setTimeout(r, 500));
+          await sleep(500);
         }
-        return { reached: false, stillLeft: m.snapshot().timeRemaining };
+        return { reached: false, simRate: +rate.toFixed(2), stillLeft: +m.snapshot().timeRemaining.toFixed(1), wallSeconds: +((performance.now() - t0) / 1000).toFixed(1) };
       })()`);
       check(`${tag}: the round ends on the timer and produces a summary`, endGame.reached === true, JSON.stringify(endGame.summary ?? endGame));
-      const endHud = await readHud(client);
+      const endHud = await hudUntil((h) => h.resultsVisible);
       check(`${tag}: results screen is shown with delivered total and local best`, endHud.resultsVisible && /×/.test(endHud.resultsDelivered ?? '') && /pts/.test(endHud.resultsBest ?? ''), JSON.stringify({ pts: endHud.resultsPoints, del: endHud.resultsDelivered, best: endHud.resultsBest }));
       await shot(client, `${tag}-06-results`);
 

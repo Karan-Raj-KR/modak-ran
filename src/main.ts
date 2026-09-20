@@ -94,6 +94,7 @@ function initApp() {
       send: (command: GameCommand) => sim.processCommand(command),
       snapshot: () => sim.getSnapshot(),
       level: COURTYARD_LEVEL,
+      config: CONFIG,
       /** Dispatch a real keyboard event through the window listeners. */
       key: (type: 'keydown' | 'keyup', code: string) => {
         window.dispatchEvent(
