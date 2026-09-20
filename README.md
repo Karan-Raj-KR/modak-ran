@@ -12,7 +12,7 @@
 > **A high-performance, handcrafted 3D festive diorama game celebrating Ganesh Chaturthi.**  
 > Guide Mushak across a luminous twilight temple courtyard, gather golden modaks into your woven basket, and race to deliver them to Lord Ganesha's sanctum before the 60-second festival bell tolls!
 
-🎮 **Play Live**: [**https://modak-inky.vercel.app**](https://modak-inky.vercel.app)
+🎮 **Play Live**: [**https://modak-inky.vercel.app**](modak-run.karanrajkr.com)
 
 ---
 
