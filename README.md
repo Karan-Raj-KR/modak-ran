@@ -6,8 +6,13 @@
 [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
+[![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://modak-inky.vercel.app)
+[![Live Demo](https://img.shields.io/badge/Play_Live_Game-modak--inky.vercel.app-2ea44f?style=for-the-badge&logo=google-chrome&logoColor=white)](https://modak-inky.vercel.app)
+
 > **A high-performance, handcrafted 3D festive diorama game celebrating Ganesh Chaturthi.**  
 > Guide Mushak across a luminous twilight temple courtyard, gather golden modaks into your woven basket, and race to deliver them to Lord Ganesha's sanctum before the 60-second festival bell tolls!
+
+🎮 **Play Live**: [**https://modak-inky.vercel.app**](https://modak-inky.vercel.app)
 
 ---
 
